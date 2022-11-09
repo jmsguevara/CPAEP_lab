@@ -1,0 +1,12 @@
+csrc/*
+linter/*
+log/*
+out/*
+WORK/*
+vc_hdrs.h
+transcript
+covhtmlreport/
+cov_report
+vish_stacktrace.vstf
+vsim.wlf
+.vscode/
