@@ -125,7 +125,8 @@ module controller_fsm #(
                                                 .we(mac_valid && last_ch_in && last_k_v && last_k_h));
   //mini fsm to loop over <fetch_a, fetch_b, acc>
 
-  typedef enum {IDLE, FETCH_A, FETCH_B, MAC} fsm_state;
+  //typedef enum {IDLE, FETCH_A, FETCH_B, MAC} fsm_state;
+  typedef enum {IDLE, FETCH, MAC} fsm_state;
   fsm_state current_state;
   fsm_state next_state;
   always @ (posedge clk or negedge arst_n_in) begin
@@ -150,21 +151,28 @@ module controller_fsm #(
     case (current_state)
       IDLE: begin
         running = 0;
-        next_state = start ? FETCH_A : IDLE;
+        next_state = start ? FETCH : IDLE;
       end
-      FETCH_A: begin
+      //FETCH_A: begin
+        //a_ready = 1;
+        //write_a = a_valid;
+        //next_state = a_valid ? FETCH_B : FETCH_A;
+      //end
+      //FETCH_B: begin
+        //b_ready = 1;
+        //write_b = b_valid;
+        //next_state = b_valid ? MAC : FETCH_B;
+      //end
+      FETCH: begin
         a_ready = 1;
-        write_a = a_valid;
-        next_state = a_valid ? FETCH_B : FETCH_A;
-      end
-      FETCH_B: begin
         b_ready = 1;
+        write_a = a_valid;
         write_b = b_valid;
-        next_state = b_valid ? MAC : FETCH_B;
+        next_state = b_valid ? MAC : FETCH;
       end
       MAC: begin
         mac_valid = 1;
-        next_state = last_overall ? IDLE : FETCH_A;
+        next_state = last_overall ? IDLE : FETCH;
       end
     endcase
   end

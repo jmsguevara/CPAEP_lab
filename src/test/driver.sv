@@ -70,15 +70,16 @@ class Driver #(config_t cfg);
                   end else begin
                     intf_i.cb.a_input <= 0; // zero padding for boundary cases
                   end
-                  @(intf_i.cb iff intf_i.cb.a_ready);
-                  intf_i.cb.a_valid <= 0;
+                  //@(intf_i.cb iff intf_i.cb.a_ready);
+                  //intf_i.cb.a_valid <= 0;
 
-                  //drive a (one word from kernel)
+                  //drive b (one word from kernel)
                   intf_i.cb.b_valid <= 1;
                   assert (!$isunknown(tract_kernel.kernel[ky][kx][inch][outch]));
                   intf_i.cb.b_input <= tract_kernel.kernel[ky][kx][inch][outch];
-                  @(intf_i.cb iff intf_i.cb.b_ready);
-                  intf_i.cb.b_valid <= 0;
+                  @(intf_i.cb iff intf_i.cb.b_ready && intf_i.cb.a_ready);
+                    intf_i.cb.a_valid <= 0;
+                    intf_i.cb.b_valid <= 0;
                 end
               end
             end
