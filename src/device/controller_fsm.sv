@@ -165,6 +165,8 @@ module controller_fsm #(
         mac_valid = 1;
         a_ready = 1;
         b_ready = 1;
+        write_a = a_valid;
+        write_b = b_valid;
         next_state = last_overall ? IDLE : FETCH;
       end
     endcase
