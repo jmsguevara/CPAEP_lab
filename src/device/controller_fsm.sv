@@ -153,16 +153,6 @@ module controller_fsm #(
         running = 0;
         next_state = start ? FETCH : IDLE;
       end
-      //FETCH_A: begin
-        //a_ready = 1;
-        //write_a = a_valid;
-        //next_state = a_valid ? FETCH_B : FETCH_A;
-      //end
-      //FETCH_B: begin
-        //b_ready = 1;
-        //write_b = b_valid;
-        //next_state = b_valid ? MAC : FETCH_B;
-      //end
       FETCH: begin
         mac_valid = 1;
         a_ready = 1;

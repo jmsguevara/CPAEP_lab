@@ -53,8 +53,8 @@ module mac #(
                 .OUT_WIDTH(ACCUMULATOR_WIDTH),
                 .OUT_SCALE(0))
     mul
-    (.a(a),
-     .b(b),
+    (.a(pp_a),
+     .b(pp_b),
      .out(product));
 
 
