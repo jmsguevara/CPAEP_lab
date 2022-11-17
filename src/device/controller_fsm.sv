@@ -164,7 +164,7 @@ module controller_fsm #(
         //next_state = b_valid ? MAC : FETCH_B;
       //end
       FETCH: begin
-        // mac_valid = 1;
+        mac_valid = 1;
         a_ready = 1;
         b_ready = 1;
         write_a = a_valid;
@@ -173,8 +173,8 @@ module controller_fsm #(
       end
       MAC: begin
         mac_valid = 1;
-        // a_ready = 1;
-        // b_ready = 1;
+        a_ready = 1;
+        b_ready = 1;
         next_state = last_overall ? IDLE : FETCH;
       end
     endcase
