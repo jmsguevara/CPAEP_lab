@@ -35,6 +35,18 @@ module mac #(
                         clk
   */
 
+//   // Pipelining: MEM
+
+//   `REG(A_WIDTH, pp_a);
+//   assign pp_a_we = input_valid;
+//   assign pp_a_next = a;
+
+//   `REG(B_WIDTH, pp_b);
+//   assign pp_b_we = input_valid;
+//   assign pp_b_next = b;
+
+//   // Pipelining: MEM -> EXEC
+
   logic signed [ACCUMULATOR_WIDTH-1:0] product;
   multiplier #( .A_WIDTH(A_WIDTH),
                 .B_WIDTH(B_WIDTH),
