@@ -102,14 +102,15 @@ module controller_fsm #(
   assign mem_re         = k_v == 0 && k_h == 0;
   assign mem_read_addr  = ch_out;
 
-  assign mac_accumulate_internal = ! (k_v == 0 && k_h == 0);
-  assign mac_accumulate_with_0   = ch_in ==0 && k_v == 0 && k_h == 0;
 
   //mark outputs
   `REG(1, output_valid_reg);
   assign output_valid_reg_next = mac_valid && last_ch_in && last_k_v && last_k_h;
   assign output_valid_reg_we   = 1;
   assign output_valid = output_valid_reg;
+
+  assign mac_accumulate_internal = ! (k_v == 0 && k_h == 0);
+  assign mac_accumulate_with_0   = (ch_in ==0 && k_v == 0 && k_h == 0);
 
   register #(.WIDTH(32)) output_x_r (.clk(clk), .arst_n_in(arst_n_in),
                                                 .din(x),
@@ -154,7 +155,6 @@ module controller_fsm #(
         next_state = start ? FETCH : IDLE;
       end
       FETCH: begin
-        mac_valid = 1;
         a_ready = 1;
         b_ready = 1;
         write_a = a_valid;
@@ -167,7 +167,7 @@ module controller_fsm #(
         b_ready = 1;
         write_a = a_valid;
         write_b = b_valid;
-        next_state = last_overall ? IDLE : FETCH;
+        next_state = last_overall ? IDLE : MAC;
       end
     endcase
   end
