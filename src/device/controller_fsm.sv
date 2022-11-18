@@ -90,6 +90,9 @@ module controller_fsm #(
   logic last_overall;
   assign last_overall   = last_k_h && last_k_v && last_ch_out && last_ch_in && last_y && last_x;
 
+  `REG(1, pp_y_we);
+  assign pp_y_we_next = y_we;
+  assign pp_y_we_we = 1;
 
   `REG(32, prev_ch_out);
   assign prev_ch_out_next = ch_out;
@@ -107,7 +110,12 @@ module controller_fsm #(
   `REG(1, output_valid_reg);
   assign output_valid_reg_next = mac_valid && last_ch_in && last_k_v && last_k_h;
   assign output_valid_reg_we   = 1;
-  assign output_valid = output_valid_reg;
+  // assign output_valid = output_valid_reg;
+
+  `REG(1, output_valid_reg_reg);
+  assign output_valid_reg_reg_next = output_valid_reg;
+  assign output_valid_reg_reg_we   = 1;
+  assign output_valid = output_valid_reg_reg;
 
   assign mac_accumulate_internal = ! (k_v == 0 && k_h == 0);
   assign mac_accumulate_with_0   = (ch_in ==0 && k_v == 0 && k_h == 0);
@@ -167,7 +175,7 @@ module controller_fsm #(
         b_ready = 1;
         write_a = a_valid;
         write_b = b_valid;
-        next_state = last_overall ? IDLE : MAC;
+        next_state = last_overall ? IDLE : (pp_y_we ? FETCH : MAC);
       end
     endcase
   end
