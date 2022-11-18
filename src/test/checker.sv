@@ -118,7 +118,7 @@ class Checker #(config_t cfg);
           if (verbose) $display("[CHK] Result is correct");
         end else begin
           $display("[CHK] Result is incorrect");
-          $display("expected = %d %% ", expected);
+          $display("expected = %h", expected);
           $stop;
         end
         count++;
