@@ -92,41 +92,8 @@ module top_chip #(
 
   );
 
-  // `REG(1, pp_ext_mem_write_en);
-  // assign pp_ext_mem_write_en_next = mem_write_en;
-  // assign pp_ext_mem_write_en_we = 1;
-
-  // `REG(1, pp_ext_mem_read_en);
-  // assign pp_ext_mem_read_en_next = mem_read_en;
-  // assign pp_ext_mem_read_en_we = 1;
-
-  // `REG($clog2(EXT_MEM_HEIGHT), pp_ext_mem_write_addr);
-  // assign pp_ext_mem_write_addr_next = mem_write_addr;
-  // assign pp_ext_mem_write_addr_we = 1;
-
-  // `REG($clog2(EXT_MEM_HEIGHT), pp_ext_mem_read_addr);
-  // assign pp_ext_mem_read_addr_next = mem_read_addr;
-  // assign pp_ext_mem_read_addr_we = 1;
-
-  // assign ext_mem_write_en = pp_ext_mem_write_en;
-  // assign ext_mem_read_en = pp_ext_mem_read_en;
-  // assign ext_mem_write_addr = pp_ext_mem_write_addr;
-  // assign ext_mem_read_addr = pp_ext_mem_read_addr;
-
-  // `REG(1, pp_mac_accumulate_with_0);
-  // assign pp_mac_accumulate_with_0_next = mac_accumulate_with_0;
-  // assign pp_mac_accumulate_with_0_we = 1;
-
-  // `REG(EXT_MEM_WIDTH, pp_ext_mem_qout);
-  // assign pp_ext_mem_qout_next = ext_mem_qout;
-  // assign pp_ext_mem_qout_we = 1;
-
   logic signed [ACCUMULATION_WIDTH-1:0] mac_partial_sum;
   assign mac_partial_sum = mac_accumulate_with_0 ? 0 : ext_mem_qout;
-
-  // `REG(ACCUMULATION_WIDTH, pp_mac_partial_sum);
-  // assign pp_mac_partial_sum_next = mac_partial_sum;
-  // assign pp_mac_partial_sum_we = 1;
 
   logic signed [ACCUMULATION_WIDTH-1:0] mac_out;
   assign ext_mem_dout = mac_out;
@@ -137,17 +104,6 @@ module top_chip #(
   assign b_next = b_input;
   assign a_we = write_a;
   assign b_we = write_b;
-
-  `REG(IO_DATA_WIDTH, pp_a);
-  `REG(IO_DATA_WIDTH, pp_b);
-  assign pp_a_next = a;
-  assign pp_b_next = b;
-  assign pp_a_we = 1;
-  assign pp_b_we = 1;
-
-  `REG(1, pp_mac_accumulate_internal);
-  assign pp_mac_accumulate_internal_next = mac_accumulate_internal;
-  assign pp_mac_accumulate_internal_we = 1;
 
   mac #(
     .A_WIDTH(IO_DATA_WIDTH),
