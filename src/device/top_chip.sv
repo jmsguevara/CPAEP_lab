@@ -113,16 +113,20 @@ module top_chip #(
   assign ext_mem_write_addr = pp_ext_mem_write_addr;
   assign ext_mem_read_addr = pp_ext_mem_read_addr;
 
-  `REG(1, pp_mac_accumulate_with_0);
-  assign pp_mac_accumulate_with_0_next = mac_accumulate_with_0;
-  assign pp_mac_accumulate_with_0_we = 1;
+  // `REG(1, pp_mac_accumulate_with_0);
+  // assign pp_mac_accumulate_with_0_next = mac_accumulate_with_0;
+  // assign pp_mac_accumulate_with_0_we = 1;
 
   // `REG(EXT_MEM_WIDTH, pp_ext_mem_qout);
   // assign pp_ext_mem_qout_next = ext_mem_qout;
   // assign pp_ext_mem_qout_we = 1;
 
   logic signed [ACCUMULATION_WIDTH-1:0] mac_partial_sum;
-  assign mac_partial_sum = pp_mac_accumulate_with_0 ? 0 : ext_mem_qout;
+  assign mac_partial_sum = mac_accumulate_with_0 ? 0 : ext_mem_qout;
+
+  `REG(ACCUMULATION_WIDTH, pp_mac_partial_sum);
+  assign pp_mac_partial_sum_next = mac_partial_sum;
+  assign pp_mac_partial_sum_we = 1;
 
   logic signed [ACCUMULATION_WIDTH-1:0] mac_out;
   assign ext_mem_dout = mac_out;
@@ -158,7 +162,7 @@ module top_chip #(
 
    .input_valid(mac_valid),
    .accumulate_internal(pp_mac_accumulate_internal),
-   .partial_sum_in(mac_partial_sum),
+   .partial_sum_in(pp_mac_partial_sum),
    .a(pp_a),
    .b(pp_b),
    .out(mac_out));
