@@ -78,26 +78,6 @@ class Driver #(config_t cfg);
       end
     end
     
-    nz_index = 0;
-
-    // generate compressed feature map
-    for(int x = 0; x < cfg.FEATURE_MAP_WIDTH; x++) begin
-      for(int y = 0; y < cfg.FEATURE_MAP_HEIGHT; y++) begin
-        for(int inch = 0; inch<cfg.INPUT_NB_CHANNELS; inch++) begin
-
-            if(tract_feature.inputs[y][x][inch] != 0) begin
-              feature_map_nz[nz_index] = tract_feature.inputs[y][x][inch];
-              feature_map_zeros[y][x][inch] = 1;
-              nz_index++;
-            end
-            else begin
-              feature_map_zeros[y][x][inch] = 0;
-            end
-
-        end
-      end
-    end
-
     forever begin
       time starttime;
       // Get a transaction with feature from the Generator
@@ -109,6 +89,26 @@ class Driver #(config_t cfg);
       starttime = $time();
       @(intf_i.cb);
       intf_i.cb.start <= 0;
+
+      nz_index = 0;
+
+      // generate compressed feature map
+      for(int x = 0; x < cfg.FEATURE_MAP_WIDTH; x++) begin
+        for(int y = 0; y < cfg.FEATURE_MAP_HEIGHT; y++) begin
+          for(int inch = 0; inch<cfg.INPUT_NB_CHANNELS; inch++) begin
+
+              if(tract_feature.inputs[y][x][inch] != 0) begin
+                feature_map_nz[nz_index] = tract_feature.inputs[y][x][inch];
+                feature_map_zeros[y][x][inch] = 1;
+                nz_index++;
+              end
+              else begin
+                feature_map_zeros[y][x][inch] = 0;
+              end
+
+          end
+        end
+      end
 
       $display("[DRV] ----- Driving a new input feature map -----");
       for(int x=0;x<cfg.FEATURE_MAP_WIDTH; x++) begin
