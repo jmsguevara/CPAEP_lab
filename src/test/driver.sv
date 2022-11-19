@@ -43,7 +43,7 @@ class Driver #(config_t cfg);
   bit [15:0] kernel_nz [$];
   bit [15:0] feature_map_nz [$];
   bit kernel_zeroes [$][$][$][$];
-  bit feature_map_zeros [$][$][$][$];
+  bit feature_map_zeros [$][$][$];
   bit [7:0] nz_index;
 
   task run();
