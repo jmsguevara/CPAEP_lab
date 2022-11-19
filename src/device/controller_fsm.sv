@@ -90,6 +90,9 @@ module controller_fsm #(
   logic last_overall;
   assign last_overall   = last_k_h && last_k_v && last_ch_out && last_ch_in && last_y && last_x;
 
+  `REG(1, pp_y_we);
+  assign pp_y_we_next = y_we;
+  assign pp_y_we_we = 1;
 
   `REG(32, prev_ch_out);
   assign prev_ch_out_next = ch_out;
@@ -102,14 +105,15 @@ module controller_fsm #(
   assign mem_re         = k_v == 0 && k_h == 0;
   assign mem_read_addr  = ch_out;
 
-  assign mac_accumulate_internal = ! (k_v == 0 && k_h == 0);
-  assign mac_accumulate_with_0   = ch_in ==0 && k_v == 0 && k_h == 0;
 
   //mark outputs
   `REG(1, output_valid_reg);
   assign output_valid_reg_next = mac_valid && last_ch_in && last_k_v && last_k_h;
   assign output_valid_reg_we   = 1;
   assign output_valid = output_valid_reg;
+
+  assign mac_accumulate_internal = ! (k_v == 0 && k_h == 0);
+  assign mac_accumulate_with_0   = (ch_in ==0 && k_v == 0 && k_h == 0);
 
   register #(.WIDTH(32)) output_x_r (.clk(clk), .arst_n_in(arst_n_in),
                                                 .din(x),
@@ -153,18 +157,7 @@ module controller_fsm #(
         running = 0;
         next_state = start ? FETCH : IDLE;
       end
-      //FETCH_A: begin
-        //a_ready = 1;
-        //write_a = a_valid;
-        //next_state = a_valid ? FETCH_B : FETCH_A;
-      //end
-      //FETCH_B: begin
-        //b_ready = 1;
-        //write_b = b_valid;
-        //next_state = b_valid ? MAC : FETCH_B;
-      //end
       FETCH: begin
-        // mac_valid = 1;
         a_ready = 1;
         b_ready = 1;
         write_a = a_valid;
@@ -173,9 +166,11 @@ module controller_fsm #(
       end
       MAC: begin
         mac_valid = 1;
-        // a_ready = 1;
-        // b_ready = 1;
-        next_state = last_overall ? IDLE : FETCH;
+        a_ready = 1;
+        b_ready = 1;
+        write_a = a_valid;
+        write_b = b_valid;
+        next_state = last_overall ? IDLE : MAC;
       end
     endcase
   end

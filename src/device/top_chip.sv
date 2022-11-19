@@ -47,17 +47,14 @@ module top_chip #(
   logic write_a;
   logic write_b;
 
-  `REG(IO_DATA_WIDTH, a);
-  `REG(IO_DATA_WIDTH, b);
-  assign a_next = a_input;
-  assign b_next = b_input;
-  assign a_we = write_a;
-  assign b_we = write_b;
-
   logic mac_valid;
   logic mac_accumulate_internal;
   logic mac_accumulate_with_0;
 
+  logic mem_write_en;
+  logic mem_read_en;
+  logic unsigned[$clog2(EXT_MEM_HEIGHT)-1:0] mem_write_addr;
+  logic unsigned[$clog2(EXT_MEM_HEIGHT)-1:0] mem_read_addr;
 
   controller_fsm #(
   .LOG2_OF_MEM_HEIGHT($clog2(EXT_MEM_HEIGHT)),
@@ -95,13 +92,18 @@ module top_chip #(
 
   );
 
-
-
   logic signed [ACCUMULATION_WIDTH-1:0] mac_partial_sum;
   assign mac_partial_sum = mac_accumulate_with_0 ? 0 : ext_mem_qout;
 
   logic signed [ACCUMULATION_WIDTH-1:0] mac_out;
   assign ext_mem_dout = mac_out;
+
+  `REG(IO_DATA_WIDTH, a);
+  `REG(IO_DATA_WIDTH, b);
+  assign a_next = a_input;
+  assign b_next = b_input;
+  assign a_we = write_a;
+  assign b_we = write_b;
 
   mac #(
     .A_WIDTH(IO_DATA_WIDTH),
