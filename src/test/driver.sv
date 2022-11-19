@@ -28,21 +28,23 @@ class Driver #(config_t cfg);
     $display("[DRV] -----  Reset Ended  -----");
   endtask
   
-//  sparsity exploit:
+  //  sparsity exploit:
 
-//1. reshape feature matrix and generate zero indices (driver)
-//2. reshape kernel matrix and generate zero indices (driver) DONE
-//3. modify driver for loop (order of sending data)
-//4. modify controller fsm (match driver order)
-//5. create on-chip memory for both matrices and zero indices
-//6. create on-chip decoder
+  //1. reshape feature matrix and generate zero indices (driver)
+  //2. reshape kernel matrix and generate zero indices (driver) DONE
+  //3. modify driver for loop (order of sending data)
+  //4. modify controller fsm (match driver order)
+  //5. create on-chip memory for both matrices and zero indices
+  //6. create on-chip decoder
 
-//fetch input to memory -> fetch kernel to memory -> transfer from memory to mac (old fetch) -> mac
+  //fetch input to memory -> fetch kernel to memory -> transfer from memory to mac (old fetch) -> mac
 
-    //kernel matrices instantiation
-    bit [15:0] kernel_nz [$];
-    bit kernel_zeroes [$][$][$][$];
-    bit [7:0] nz_index;
+  //kernel matrices instantiation
+  bit [15:0] kernel_nz [$];
+  bit [15:0] feature_map_nz [$];
+  bit kernel_zeroes [$][$][$][$];
+  bit feature_map_zeros [$][$][$][$];
+  bit [7:0] nz_index;
 
   task run();
     bit first = 1;
@@ -58,26 +60,43 @@ class Driver #(config_t cfg);
     
     //generate kernel matrices
     for(int inch=0;inch<cfg.INPUT_NB_CHANNELS; inch++) begin
-        for(int outch=0;outch<cfg.OUTPUT_NB_CHANNELS; outch++) begin
-          for(int ky=0;ky<cfg.KERNEL_SIZE; ky++) begin
-            for(int kx=0;kx<cfg.KERNEL_SIZE; kx++) begin
-              //$display("ky = %h, kx = %h, inch = %h, outch = %h, value = %h", ky, kx, inch, outch, tract_kernel.kernel[ky][kx][inch][outch]);
-              if (tract_kernel.kernel[ky][kx][inch][outch] > 0) begin
-                kernel_nz[nz_index] = tract_kernel.kernel[ky][kx][inch][outch];
-                //$display("index = %h, value = %h", nz_index, kernel_nz[nz_index]);
-                kernel_zeroes[ky][kx][inch][outch] = 1;
-                nz_index++;
-              end
-              else begin
-                kernel_zeroes[ky][kx][inch][outch] = 0;
-              end
-              //$display("ky = %h, kx = %h, inch = %h, outch = %h, value = %h", ky, kx, inch, outch, kernel_zeroes[ky][kx][inch][outch]);
+      for(int outch=0;outch<cfg.OUTPUT_NB_CHANNELS; outch++) begin
+        for(int ky=0;ky<cfg.KERNEL_SIZE; ky++) begin
+          for(int kx=0;kx<cfg.KERNEL_SIZE; kx++) begin
+            
+            if (tract_kernel.kernel[ky][kx][inch][outch] != 0) begin
+              kernel_nz[nz_index] = tract_kernel.kernel[ky][kx][inch][outch];
+              kernel_zeroes[ky][kx][inch][outch] = 1;
+              nz_index++;
             end
+            else begin
+              kernel_zeroes[ky][kx][inch][outch] = 0;
+            end
+
           end
         end
       end
-      
+    end
+    
     nz_index = 0;
+
+    // generate compressed feature map
+    for(int x = 0; x < cfg.FEATURE_MAP_WIDTH; x++) begin
+      for(int y = 0; y < cfg.FEATURE_MAP_HEIGHT; y++) begin
+        for(int inch = 0; inch<cfg.INPUT_NB_CHANNELS; inch++) begin
+
+            if(tract_feature.inputs[y][x][inch] != 0) begin
+              feature_map_nz[nz_index] = tract_feature.inputs[y][x][inch];
+              feature_map_zeros[y][x][inch] = 1;
+              nz_index++;
+            end
+            else begin
+              feature_map_zeros[y][x][inch] = 0;
+            end
+
+        end
+      end
+    end
 
     forever begin
       time starttime;
@@ -90,8 +109,6 @@ class Driver #(config_t cfg);
       starttime = $time();
       @(intf_i.cb);
       intf_i.cb.start <= 0;
-
-
 
       $display("[DRV] ----- Driving a new input feature map -----");
       for(int x=0;x<cfg.FEATURE_MAP_WIDTH; x++) begin
