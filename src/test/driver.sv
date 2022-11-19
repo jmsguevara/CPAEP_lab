@@ -27,6 +27,22 @@ class Driver #(config_t cfg);
     repeat (2) @(intf_i.cb);
     $display("[DRV] -----  Reset Ended  -----");
   endtask
+  
+//  sparsity exploit:
+
+//1. reshape feature matrix and generate zero indices (driver)
+//2. reshape kernel matrix and generate zero indices (driver) DONE
+//3. modify driver for loop (order of sending data)
+//4. modify controller fsm (match driver order)
+//5. create on-chip memory for both matrices and zero indices
+//6. create on-chip decoder
+
+//fetch input to memory -> fetch kernel to memory -> transfer from memory to mac (old fetch) -> mac
+
+    //kernel matrices instantiation
+    bit [15:0] kernel_nz [$];
+    bit kernel_zeroes [$][$][$][$];
+    bit [7:0] nz_index;
 
   task run();
     bit first = 1;
@@ -37,6 +53,31 @@ class Driver #(config_t cfg);
     gen2drv_kernel.get(tract_kernel);
 
     $display("[DRV] -----  Start execution -----");
+    
+    nz_index = 0;
+    
+    //generate kernel matrices
+    for(int inch=0;inch<cfg.INPUT_NB_CHANNELS; inch++) begin
+        for(int outch=0;outch<cfg.OUTPUT_NB_CHANNELS; outch++) begin
+          for(int ky=0;ky<cfg.KERNEL_SIZE; ky++) begin
+            for(int kx=0;kx<cfg.KERNEL_SIZE; kx++) begin
+              //$display("ky = %h, kx = %h, inch = %h, outch = %h, value = %h", ky, kx, inch, outch, tract_kernel.kernel[ky][kx][inch][outch]);
+              if (tract_kernel.kernel[ky][kx][inch][outch] > 0) begin
+                kernel_nz[nz_index] = tract_kernel.kernel[ky][kx][inch][outch];
+                //$display("index = %h, value = %h", nz_index, kernel_nz[nz_index]);
+                kernel_zeroes[ky][kx][inch][outch] = 1;
+                nz_index++;
+              end
+              else begin
+                kernel_zeroes[ky][kx][inch][outch] = 0;
+              end
+              //$display("ky = %h, kx = %h, inch = %h, outch = %h, value = %h", ky, kx, inch, outch, kernel_zeroes[ky][kx][inch][outch]);
+            end
+          end
+        end
+      end
+      
+    nz_index = 0;
 
     forever begin
       time starttime;
