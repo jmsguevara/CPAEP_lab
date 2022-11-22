@@ -180,7 +180,7 @@ module controller_fsm #(
       LOAD: begin
         a_ready = 1;
         b_ready = 1;
-        next_state = data_ready ? MAC : LOAD;
+        next_state = data_ready ? FETCH : LOAD;
       end
       FETCH: begin
         a_ready = 1;
