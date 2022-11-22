@@ -34,6 +34,13 @@ module controller_fsm #(
   output logic mac_accumulate_internal,
   output logic mac_accumulate_with_0,
 
+  output logic [31:0] ky_out,
+  output logic [31:0] kx_out,
+  output logic [31:0] outch_out,
+  output logic [31:0] inch_out,
+  output logic [31:0] y_out,
+  output logic [31:0] x_out,
+
   output logic output_valid,
   output logic [32-1:0] output_x,
   output logic [32-1:0] output_y,
@@ -41,6 +48,16 @@ module controller_fsm #(
 
   );
 
+  typedef enum {IDLE, LOAD, FETCH, MAC} fsm_state;
+  fsm_state current_state;
+  fsm_state next_state;
+  always @ (posedge clk or negedge arst_n_in) begin
+    if(arst_n_in==0) begin
+      current_state <= IDLE;
+    end else begin
+      current_state <= next_state;
+    end
+  end
 
   //loop counters (see register.sv for macro)
   `REG(32, k_v);
@@ -58,6 +75,13 @@ module controller_fsm #(
   assign ch_in_next = reset_ch_in ? 0 : ch_in + 1;
   assign ch_out_next = reset_ch_out ? 0 : ch_out + 1;
 
+  assign ky_out = k_v;
+  assign kx_out = k_h;
+  assign outch_out = ch_out;
+  assign inch_out = ch_in;
+  assign y_out = y;
+  assign x_out = x;
+
   logic last_k_v, last_k_h, last_x, last_y, last_ch_in, last_ch_out;
   assign last_k_v = k_v == KERNEL_SIZE - 1;
   assign last_k_h = k_h == KERNEL_SIZE - 1;
@@ -73,7 +97,6 @@ module controller_fsm #(
   assign reset_ch_in = last_ch_in;
   assign reset_ch_out = last_ch_out;
 
-
   /*
   chosen loop order:
   for x
@@ -85,7 +108,7 @@ module controller_fsm #(
               body
   */
   // ==>
-  assign k_h_we    = mac_valid; //each time a mac is done, k_h_we increments (or resets to 0 if last)
+  assign k_h_we    = (current_state == FETCH) || mac_valid; //each time a mac is done, or in case of kickstarting the pipeline, k_h_we increments (or resets to 0 if last)
   assign k_v_we    = mac_valid && last_k_h; //only if last of k_h loop
   assign ch_out_we = mac_valid && last_k_h && last_k_v; //only if last of all enclosed loops
   assign ch_in_we  = mac_valid && last_k_h && last_k_v && last_ch_out; //only if last of all enclosed loops
@@ -135,16 +158,8 @@ module controller_fsm #(
                                                 .we(mac_valid && last_ch_in && last_k_v && last_k_h));
 
   //typedef enum {IDLE, FETCH, MAC} fsm_state;
-  typedef enum {IDLE, LOAD, FETCH, MAC} fsm_state;
-  fsm_state current_state;
-  fsm_state next_state;
-  always @ (posedge clk or negedge arst_n_in) begin
-    if(arst_n_in==0) begin
-      current_state <= IDLE;
-    end else begin
-      current_state <= next_state;
-    end
-  end
+  
+
 
   always_comb begin
     //defaults: applicable if not overwritten below
