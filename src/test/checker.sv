@@ -119,7 +119,7 @@ class Checker #(config_t cfg);
           if (verbose) $display("[CHK] Result is correct");
         end else begin
           $display("[CHK] Result is incorrect");
-          $stop;
+          // $stop;
         end
         count++;
         if (count == COUNT_ALL_OUTPUT) begin
