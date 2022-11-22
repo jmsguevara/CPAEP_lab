@@ -186,8 +186,8 @@ module controller_fsm #(
         a_ready = 1;
         b_ready = 1;
         int_mem_re = 1;
-        write_a = 1;
-        write_b = 1;
+        // write_a = 1;
+        // write_b = 1;
         next_state = MAC;
       end
       MAC: begin
