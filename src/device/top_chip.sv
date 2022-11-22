@@ -196,6 +196,8 @@ module top_chip #(
    .arst_n_in(arst_n_in),
 
    .input_valid(mac_valid),
+   .accumulate_internal(mac_accumulate_internal),
+   .partial_sum_in(mac_partial_sum),
    .a(a),
    .b(b),
    .out(mac_out));
