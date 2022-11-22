@@ -24,8 +24,11 @@ module top_chip #(
    output logic [EXT_MEM_WIDTH-1:0] ext_mem_din,
    output logic ext_mem_write_en,
 
-   // write-enable driver -> internal memory
+   // write-enable driver <-> internal memory
    input logic int_mem_we,
+   input logic data_ready,
+
+   output logic fsm_done,
 
    //system inputs and outputs
    input logic [IO_DATA_WIDTH-1:0] a_input,     // comme l'adresse
@@ -50,8 +53,9 @@ module top_chip #(
   logic write_a;
   logic write_b;
   
-  logic data_ready;
-  assign data_ready = 0;
+  logic int_mem_re;
+  // logic data_ready;
+  // assign data_ready <= 0;
 
   logic mac_valid;
   logic mac_accumulate_internal;
@@ -62,23 +66,42 @@ module top_chip #(
   logic unsigned[$clog2(EXT_MEM_HEIGHT)-1:0] mem_write_addr;
   logic unsigned[$clog2(EXT_MEM_HEIGHT)-1:0] mem_read_addr;
 
-  logic [IO_DATA_WIDTH-1:0] int_mem_qout;
+  logic [IO_DATA_WIDTH-1:0] input_mem_out;
+  logic [IO_DATA_WIDTH-1:0] kernel_mem_out;
 
   memory #(
     .WIDTH(IO_DATA_WIDTH),
-    .HEIGHT(1<<16),
+    .HEIGHT(1<<15),
     .USED_AS_EXTERNAL_MEM(0)
   )
-  data_mem // mémoire sur chip pour matrix
+  input_mem // mémoire sur chip pour matrix
   (
     .clk(clk),
 
-    .read_en(0),
+    .read_en(int_mem_re),
     .read_addr(0),
-    .qout(int_mem_qout),
+    .qout(input_mem_out),
 
-    .write_addr(a_input),
-    .write_en(int_mem_we),
+    .write_addr(a_input[14:0]),
+    .write_en(int_mem_we & ~a_input[15]),
+    .din(b_input)
+  );
+
+  memory #(
+    .WIDTH(IO_DATA_WIDTH),
+    .HEIGHT(1<<9),
+    .USED_AS_EXTERNAL_MEM(0)
+  )
+  kernel_mem // mémoire sur chip pour matrix
+  (
+    .clk(clk),
+
+    .read_en(int_mem_re),
+    .read_addr(0),
+    .qout(kernel_mem_out),
+
+    .write_addr(a_input[8:0]),
+    .write_en(int_mem_we & a_input[15]),
     .din(b_input)
   );
 
@@ -102,6 +125,10 @@ module top_chip #(
   .mem_read_addr(ext_mem_read_addr),
 
   .data_ready(data_ready),
+  .int_mem_re(int_mem_re),
+
+  .fsm_done(fsm_done),
+
   .a_valid(a_valid),
   .a_ready(a_ready),
   .b_valid(b_valid),
@@ -127,10 +154,12 @@ module top_chip #(
 
   `REG(IO_DATA_WIDTH, a);
   `REG(IO_DATA_WIDTH, b);
-  assign a_next = a_input;
-  assign b_next = b_input;
+  assign a_next = input_mem_out;
+  assign b_next = kernel_mem_out;
   assign a_we = write_a;
   assign b_we = write_b;
+
+  
 
   mac #(
     .A_WIDTH(IO_DATA_WIDTH),

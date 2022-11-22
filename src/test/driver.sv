@@ -19,6 +19,8 @@ class Driver #(config_t cfg);
     $display("[DRV] ----- Reset Started -----");
      //asynchronous start of reset
     intf_i.cb.start   <= 0;
+    intf_i.cb.int_mem_we <= 0;
+    intf_i.cb.data_ready <= 0;
     intf_i.cb.a_valid <= 0;
     intf_i.cb.b_valid <= 0;
     intf_i.cb.arst_n  <= 0;
@@ -62,7 +64,6 @@ class Driver #(config_t cfg);
       starttime = $time();
       @(intf_i.cb);
       intf_i.cb.start <= 0;
-
 
 
       for(int ky=0;ky<cfg.KERNEL_SIZE; ky++) begin
@@ -113,6 +114,15 @@ class Driver #(config_t cfg);
           end
         end
       end
+
+      intf_i.cb.int_mem_we <= 0;
+
+      $display("[DRV] Giving data ready signal");
+      intf_i.cb.data_ready <= 1;
+      @(intf_i.cb);
+      intf_i.cb.data_ready <= 0;
+
+      @(intf_i.cb iff intf_i.cb.fsm_done);
 
       $display("\n\n------------------\nLATENCY: input processed in %t\n------------------\n", $time() - starttime);
 

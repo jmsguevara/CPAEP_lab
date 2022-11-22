@@ -20,6 +20,10 @@ module controller_fsm #(
 
   //datapad control interface & external handshaking communication of a and b
   input logic data_ready,
+  output logic int_mem_re,
+
+  output logic fsm_done,
+
   input logic a_valid,
   input logic b_valid,
   output logic b_ready,
@@ -90,6 +94,7 @@ module controller_fsm #(
 
   logic last_overall;
   assign last_overall   = last_k_h && last_k_v && last_ch_out && last_ch_in && last_y && last_x;
+  assign fsm_done = last_overall;
 
   `REG(1, pp_y_we);
   assign pp_y_we_next = y_we;
@@ -150,6 +155,7 @@ module controller_fsm #(
     running = 1;
     a_ready = 0;
     b_ready = 0;
+    int_mem_re = 0;
 
     case (current_state)
       IDLE: begin
@@ -164,16 +170,18 @@ module controller_fsm #(
       FETCH: begin
         a_ready = 1;
         b_ready = 1;
-        write_a = a_valid;
-        write_b = b_valid;
-        next_state = b_valid ? MAC : FETCH;
+        int_mem_re = 1;
+        write_a = 1;
+        write_b = 1;
+        next_state = MAC;
       end
       MAC: begin
         mac_valid = 1;
         a_ready = 1;
         b_ready = 1;
-        write_a = a_valid;
-        write_b = b_valid;
+        int_mem_re = 1;
+        write_a = 1;
+        write_b = 1;
         next_state = last_overall ? IDLE : MAC;
       end
     endcase

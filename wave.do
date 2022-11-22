@@ -1,20 +1,20 @@
 onerror {resume}
 quietly WaveActivateNextPane {} 0
-add wave -noupdate /tbench_top/intf_i/clk
+add wave -noupdate /tbench_top/dut/top_chip_i/controller/clk
+add wave -noupdate /tbench_top/dut/top_chip_i/controller/arst_n_in
+add wave -noupdate /tbench_top/dut/top_chip_i/controller/current_state
+add wave -noupdate /tbench_top/dut/top_chip_i/kernel_mem/write_en
+add wave -noupdate /tbench_top/dut/top_chip_i/input_mem/write_en
+add wave -noupdate /tbench_top/intf_i/data_ready
+add wave -noupdate /tbench_top/dut/top_chip_i/controller/int_mem_re
 add wave -noupdate /tbench_top/intf_i/int_mem_we
-add wave -noupdate /tbench_top/intf_i/a_valid
-add wave -noupdate /tbench_top/intf_i/b_valid
-add wave -noupdate /tbench_top/intf_i/a_input
-add wave -noupdate /tbench_top/intf_i/b_input
-add wave -noupdate /tbench_top/dut/top_chip_i/data_mem/write_en
-add wave -noupdate /tbench_top/dut/top_chip_i/data_mem/write_addr
-add wave -noupdate /tbench_top/dut/top_chip_i/data_mem/din
-add wave -noupdate /tbench_top/dut/top_chip_i/data_mem/data
+add wave -noupdate /tbench_top/dut/top_chip_i/output_valid
+add wave -noupdate /tbench_top/dut/top_chip_i/controller/last_overall
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {1493000 ps} 0}
+WaveRestoreCursors {{Cursor 1} {66125925 ps} 0}
 quietly wave cursor active 1
-configure wave -namecolwidth 487
-configure wave -valuecolwidth 133
+configure wave -namecolwidth 330
+configure wave -valuecolwidth 149
 configure wave -justifyvalue left
 configure wave -signalnamewidth 0
 configure wave -snapdistance 10
@@ -27,4 +27,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {1451257 ps} {1494979 ps}
+WaveRestoreZoom {0 ps} {69756750 ps}

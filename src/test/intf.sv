@@ -15,6 +15,9 @@ interface intf #(
 
   // input interface
   logic int_mem_we;
+  logic data_ready;
+
+  logic fsm_done;
 
   logic [cfg.DATA_WIDTH - 1 : 0] a_input;
   logic a_valid;
@@ -39,6 +42,8 @@ interface intf #(
     output arst_n;
 
     output int_mem_we;
+    output data_ready;
+    input fsm_done;
 
     output a_input;  // comme l'adresse
     output a_valid;
