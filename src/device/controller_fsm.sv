@@ -157,6 +157,8 @@ module controller_fsm #(
         next_state = start ? LOAD : IDLE;
       end
       LOAD: begin
+        a_ready = 1;
+        b_ready = 1;
         next_state = data_ready ? WR_MEM : FETCH;
       end
       FETCH: begin

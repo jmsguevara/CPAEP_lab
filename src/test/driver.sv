@@ -67,6 +67,8 @@ class Driver #(config_t cfg);
           for(int ky=0;ky<cfg.KERNEL_SIZE; ky++) begin
             for(int kx=0;kx<cfg.KERNEL_SIZE; kx++) begin
               
+              intf_i.cb.a_valid <= 1;
+              intf_i.cb.b_valid <= 1;
               if (tract_kernel.kernel[ky][kx][inch][outch] != 0) begin
                 intf_i.cb.int_mem_we <= 1;
                 intf_i.cb.a_input = (1<<15 + inch<<8 + ky<<6 + kx<<4 + outch);
@@ -75,6 +77,10 @@ class Driver #(config_t cfg);
               else begin
                 intf_i.cb.int_mem_we <= 0;
               end
+
+              @(intf_i.cb iff intf_i.cb.b_ready && intf_i.cb.a_ready);
+              intf_i.cb.a_valid <= 0;
+              intf_i.cb.b_valid <= 0;
 
             end
           end
