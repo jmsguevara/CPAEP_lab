@@ -19,6 +19,7 @@ module controller_fsm #(
   output logic [LOG2_OF_MEM_HEIGHT-1:0] mem_read_addr,
 
   //datapad control interface & external handshaking communication of a and b
+  input logic data_ready,
   input logic a_valid,
   input logic b_valid,
   output logic b_ready,
@@ -127,10 +128,9 @@ module controller_fsm #(
                                                 .din(ch_out),
                                                 .qout(output_ch),
                                                 .we(mac_valid && last_ch_in && last_k_v && last_k_h));
-  //mini fsm to loop over <fetch_a, fetch_b, acc>
 
-  //typedef enum {IDLE, FETCH_A, FETCH_B, MAC} fsm_state;
-  typedef enum {IDLE, FETCH, MAC} fsm_state;
+  //typedef enum {IDLE, FETCH, MAC} fsm_state;
+  typedef enum {IDLE, LOAD, FETCH, MAC} fsm_state;
   fsm_state current_state;
   fsm_state next_state;
   always @ (posedge clk or negedge arst_n_in) begin
@@ -140,7 +140,6 @@ module controller_fsm #(
       current_state <= next_state;
     end
   end
-
 
   always_comb begin
     //defaults: applicable if not overwritten below
@@ -155,7 +154,10 @@ module controller_fsm #(
     case (current_state)
       IDLE: begin
         running = 0;
-        next_state = start ? FETCH : IDLE;
+        next_state = start ? LOAD : IDLE;
+      end
+      LOAD: begin
+        next_state = data_ready ? WR_MEM : FETCH;
       end
       FETCH: begin
         a_ready = 1;

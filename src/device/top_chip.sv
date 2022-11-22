@@ -1,5 +1,6 @@
 module top_chip #(
     parameter int IO_DATA_WIDTH = 16,
+    parameter int NZ_FLAG_WIDTH = 1,
     parameter int ACCUMULATION_WIDTH = 32,
     parameter int EXT_MEM_HEIGHT = 1<<20,
     parameter int EXT_MEM_WIDTH = ACCUMULATION_WIDTH,
@@ -23,11 +24,14 @@ module top_chip #(
    output logic [EXT_MEM_WIDTH-1:0] ext_mem_din,
    output logic ext_mem_write_en,
 
+   // driver -> internal memory
+   input logic int_mem_we,
+
    //system inputs and outputs
-   input logic [IO_DATA_WIDTH-1:0] a_input,
+   input logic [IO_DATA_WIDTH-1:0] a_input,     // comme l'adresse
    input logic a_valid,
    output logic a_ready,
-   input logic [IO_DATA_WIDTH-1:0] b_input,
+   input logic [IO_DATA_WIDTH-1:0] b_input,     // pour les données
    input logic b_valid,
    output logic b_ready,
 
@@ -43,7 +47,6 @@ module top_chip #(
    output logic running
   );
 
-
   logic write_a;
   logic write_b;
 
@@ -55,6 +58,20 @@ module top_chip #(
   logic mem_read_en;
   logic unsigned[$clog2(EXT_MEM_HEIGHT)-1:0] mem_write_addr;
   logic unsigned[$clog2(EXT_MEM_HEIGHT)-1:0] mem_read_addr;
+
+  memory #(
+    .WIDTH(IO_DATA_WIDTH),
+    .HEIGHT(1<<16),
+    .USED_AS_EXTERNAL_MEM(0)
+  )
+  data_mem // mémoire sur chip pour matrix
+  (
+    .clk(clk),
+
+    .write_addr(a_input),
+    .write_en(int_mem_we),
+    .din(b_input)
+  )
 
   controller_fsm #(
   .LOG2_OF_MEM_HEIGHT($clog2(EXT_MEM_HEIGHT)),

@@ -39,13 +39,6 @@ class Driver #(config_t cfg);
 
   //fetch input to memory -> fetch kernel to memory -> transfer from memory to mac (old fetch) -> mac
 
-  //kernel matrices instantiation
-  bit [15:0] kernel_nz [$];
-  bit [15:0] feature_map_nz [$];
-  bit kernel_zeroes [$][$][$][$];
-  bit feature_map_zeros [$][$][$];
-  bit [7:0] nz_index;
-
   task run();
     bit first = 1;
 
@@ -55,28 +48,6 @@ class Driver #(config_t cfg);
     gen2drv_kernel.get(tract_kernel);
 
     $display("[DRV] -----  Start execution -----");
-    
-    nz_index = 0;
-    
-    //generate kernel matrices
-    for(int inch=0;inch<cfg.INPUT_NB_CHANNELS; inch++) begin
-      for(int outch=0;outch<cfg.OUTPUT_NB_CHANNELS; outch++) begin
-        for(int ky=0;ky<cfg.KERNEL_SIZE; ky++) begin
-          for(int kx=0;kx<cfg.KERNEL_SIZE; kx++) begin
-            
-            if (tract_kernel.kernel[ky][kx][inch][outch] != 0) begin
-              kernel_nz[nz_index] = tract_kernel.kernel[ky][kx][inch][outch];
-              kernel_zeroes[ky][kx][inch][outch] = 1;
-              nz_index++;
-            end
-            else begin
-              kernel_zeroes[ky][kx][inch][outch] = 0;
-            end
-
-          end
-        end
-      end
-    end
     
     forever begin
       time starttime;
@@ -90,20 +61,37 @@ class Driver #(config_t cfg);
       @(intf_i.cb);
       intf_i.cb.start <= 0;
 
-      nz_index = 0;
+      // envoyer les matrices du les noyaus
+      for(int inch=0;inch<cfg.INPUT_NB_CHANNELS; inch++) begin
+        for(int outch=0;outch<cfg.OUTPUT_NB_CHANNELS; outch++) begin
+          for(int ky=0;ky<cfg.KERNEL_SIZE; ky++) begin
+            for(int kx=0;kx<cfg.KERNEL_SIZE; kx++) begin
+              
+              if (tract_kernel.kernel[ky][kx][inch][outch] != 0) begin
+                intf_i.cb.int_mem_we <= 1;
+                intf_i.cb.a_input = (1<<15 + inch<<8 + ky<<6 + kx<<4 + outch);
+                intf_i.cb.b_input = tract_kernel.kernel[ky][kx][inch][outch];
+              end
+              else begin
+                intf_i.cb.int_mem_we <= 0;
+              end
 
-      // generate compressed feature map
+            end
+          end
+        end
+      end
+
+      // envoyer les maps caractéristiques
       for(int x = 0; x < cfg.FEATURE_MAP_WIDTH; x++) begin
         for(int y = 0; y < cfg.FEATURE_MAP_HEIGHT; y++) begin
           for(int inch = 0; inch<cfg.INPUT_NB_CHANNELS; inch++) begin
 
               if(tract_feature.inputs[y][x][inch] != 0) begin
-                feature_map_nz[nz_index] = tract_feature.inputs[y][x][inch];
-                feature_map_zeros[y][x][inch] = 1;
-                nz_index++;
+                intf_i.cb.a_input = (inch<<14 + y<<7 + x);
+                intf_i_cb.b_input = tract_feature.inputs[y][x][inch];
               end
               else begin
-                feature_map_zeros[y][x][inch] = 0;
+                intf_i.cb.int_mem_we <= 0;
               end
 
           end
@@ -128,8 +116,6 @@ class Driver #(config_t cfg);
                   end else begin
                     intf_i.cb.a_input <= 0; // zero padding for boundary cases
                   end
-                  //@(intf_i.cb iff intf_i.cb.a_ready);
-                  //intf_i.cb.a_valid <= 0;
 
                   //drive b (one word from kernel)
                   intf_i.cb.b_valid <= 1;
