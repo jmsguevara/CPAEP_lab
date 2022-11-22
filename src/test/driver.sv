@@ -39,6 +39,8 @@ class Driver #(config_t cfg);
 
   //fetch input to memory -> fetch kernel to memory -> transfer from memory to mac (old fetch) -> mac
 
+  logic [15:0] addr;
+
   task run();
     bit first = 1;
 
@@ -61,18 +63,20 @@ class Driver #(config_t cfg);
       @(intf_i.cb);
       intf_i.cb.start <= 0;
 
-      // envoyer les matrices du les noyaus
-      for(int inch=0;inch<cfg.INPUT_NB_CHANNELS; inch++) begin
-        for(int outch=0;outch<cfg.OUTPUT_NB_CHANNELS; outch++) begin
-          for(int ky=0;ky<cfg.KERNEL_SIZE; ky++) begin
-            for(int kx=0;kx<cfg.KERNEL_SIZE; kx++) begin
+
+
+      for(int ky=0;ky<cfg.KERNEL_SIZE; ky++) begin
+        for(int kx=0;kx<cfg.KERNEL_SIZE; kx++) begin
+          for(int inch=0;inch<cfg.INPUT_NB_CHANNELS; inch++) begin
+            for(int outch=0;outch<cfg.OUTPUT_NB_CHANNELS; outch++) begin
               
               intf_i.cb.a_valid <= 1;
               intf_i.cb.b_valid <= 1;
               if (tract_kernel.kernel[ky][kx][inch][outch] != 0) begin
                 intf_i.cb.int_mem_we <= 1;
-                intf_i.cb.a_input = (1<<15 + inch<<8 + ky<<6 + kx<<4 + outch);
-                intf_i.cb.b_input = tract_kernel.kernel[ky][kx][inch][outch];
+                addr = {1'b1, 6'b0, inch[0], ky[1:0], kx[1:0], outch[3:0]};
+                intf_i.cb.a_input <= addr;
+                intf_i.cb.b_input <= tract_kernel.kernel[ky][kx][inch][outch];
               end
               else begin
                 intf_i.cb.int_mem_we <= 0;
@@ -87,56 +91,28 @@ class Driver #(config_t cfg);
         end
       end
 
-      // envoyer les maps caractéristiques
-      for(int x = 0; x < cfg.FEATURE_MAP_WIDTH; x++) begin
+      for(int inch = 0; inch<cfg.INPUT_NB_CHANNELS; inch++) begin
         for(int y = 0; y < cfg.FEATURE_MAP_HEIGHT; y++) begin
-          for(int inch = 0; inch<cfg.INPUT_NB_CHANNELS; inch++) begin
-
+          for(int x = 0; x < cfg.FEATURE_MAP_WIDTH; x++) begin
+              
+              intf_i.cb.a_valid <= 1;
+              intf_i.cb.b_valid <= 1;
               if(tract_feature.inputs[y][x][inch] != 0) begin
-                intf_i.cb.a_input = (inch<<14 + y<<7 + x);
-                intf_i_cb.b_input = tract_feature.inputs[y][x][inch];
+                intf_i.cb.int_mem_we <= 1;
+                addr = {1'b0, inch[0], y[6:0], x[6:0]};
+                intf_i.cb.a_input <= addr;
+                intf_i.cb.b_input <= tract_feature.inputs[y][x][inch];
               end
               else begin
                 intf_i.cb.int_mem_we <= 0;
               end
+              @(intf_i.cb iff intf_i.cb.b_ready && intf_i.cb.a_ready);
+              intf_i.cb.a_valid <= 0;
+              intf_i.cb.b_valid <= 0;
 
           end
         end
       end
-
-      $display("[DRV] ----- Driving a new input feature map -----");
-      for(int x=0;x<cfg.FEATURE_MAP_WIDTH; x++) begin
-        $display("[DRV] %.2f %% of the input is transferred", ((x)*100.0)/cfg.FEATURE_MAP_WIDTH);
-        for(int y=0;y<cfg.FEATURE_MAP_HEIGHT; y++) begin
-          for(int inch=0;inch<cfg.INPUT_NB_CHANNELS; inch++) begin
-            for(int outch=0;outch<cfg.OUTPUT_NB_CHANNELS; outch++) begin
-              for(int ky=0;ky<cfg.KERNEL_SIZE; ky++) begin
-                for(int kx=0;kx<cfg.KERNEL_SIZE; kx++) begin
-
-                  //drive a (one word from feature)
-                  intf_i.cb.a_valid <= 1;
-                  if( x+kx-cfg.KERNEL_SIZE/2 >= 0 && x+kx-cfg.KERNEL_SIZE/2 < cfg.FEATURE_MAP_WIDTH
-                    &&y+ky-cfg.KERNEL_SIZE/2 >= 0 && y+ky-cfg.KERNEL_SIZE/2 < cfg.FEATURE_MAP_HEIGHT) begin
-                    assert (!$isunknown(tract_feature.inputs[y+ky-cfg.KERNEL_SIZE/2 ][x+kx-cfg.KERNEL_SIZE/2][inch]));
-                    intf_i.cb.a_input <= tract_feature.inputs[y+ky-cfg.KERNEL_SIZE/2 ][x+kx-cfg.KERNEL_SIZE/2][inch];
-                  end else begin
-                    intf_i.cb.a_input <= 0; // zero padding for boundary cases
-                  end
-
-                  //drive b (one word from kernel)
-                  intf_i.cb.b_valid <= 1;
-                  assert (!$isunknown(tract_kernel.kernel[ky][kx][inch][outch]));
-                  intf_i.cb.b_input <= tract_kernel.kernel[ky][kx][inch][outch];
-                  @(intf_i.cb iff intf_i.cb.b_ready && intf_i.cb.a_ready);
-                    intf_i.cb.a_valid <= 0;
-                    intf_i.cb.b_valid <= 0;
-                end
-              end
-            end
-          end
-        end
-      end
-
 
       $display("\n\n------------------\nLATENCY: input processed in %t\n------------------\n", $time() - starttime);
 

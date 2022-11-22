@@ -24,7 +24,7 @@ module top_chip #(
    output logic [EXT_MEM_WIDTH-1:0] ext_mem_din,
    output logic ext_mem_write_en,
 
-   // driver -> internal memory
+   // write-enable driver -> internal memory
    input logic int_mem_we,
 
    //system inputs and outputs
@@ -49,6 +49,9 @@ module top_chip #(
 
   logic write_a;
   logic write_b;
+  
+  logic data_ready;
+  assign data_ready = 0;
 
   logic mac_valid;
   logic mac_accumulate_internal;
@@ -59,6 +62,8 @@ module top_chip #(
   logic unsigned[$clog2(EXT_MEM_HEIGHT)-1:0] mem_write_addr;
   logic unsigned[$clog2(EXT_MEM_HEIGHT)-1:0] mem_read_addr;
 
+  logic [IO_DATA_WIDTH-1:0] int_mem_qout;
+
   memory #(
     .WIDTH(IO_DATA_WIDTH),
     .HEIGHT(1<<16),
@@ -68,10 +73,14 @@ module top_chip #(
   (
     .clk(clk),
 
+    .read_en(0),
+    .read_addr(0),
+    .qout(int_mem_qout),
+
     .write_addr(a_input),
     .write_en(int_mem_we),
     .din(b_input)
-  )
+  );
 
   controller_fsm #(
   .LOG2_OF_MEM_HEIGHT($clog2(EXT_MEM_HEIGHT)),
@@ -92,6 +101,7 @@ module top_chip #(
   .mem_re(ext_mem_read_en),
   .mem_read_addr(ext_mem_read_addr),
 
+  .data_ready(data_ready),
   .a_valid(a_valid),
   .a_ready(a_ready),
   .b_valid(b_valid),
