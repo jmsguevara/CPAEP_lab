@@ -139,12 +139,7 @@ module controller_fsm #(
   `REG(1, output_valid_reg);
   assign output_valid_reg_next = mac_valid && last_ch_in && last_k_v && last_k_h;
   assign output_valid_reg_we   = 1;
-  // assign output_valid = output_valid_reg;
-
-  `REG(1, output_valid_reg2);
-  assign output_valid_reg2_next = output_valid_reg;
-  assign output_valid_reg2_we   = 1;
-  assign output_valid = output_valid_reg2;
+  assign output_valid = output_valid_reg;
 
   assign mac_accumulate_internal = ! (k_v == 0 && k_h == 0);
   assign mac_accumulate_with_0   = (ch_in ==0 && k_v == 0 && k_h == 0);
