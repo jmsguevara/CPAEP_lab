@@ -195,8 +195,7 @@ module top_chip #(
   (.clk(clk),
    .arst_n_in(arst_n_in),
 
-   .input_valid(mac_valid),sim:/tbench_top/dut/top_chip_i/controller/clk
-_sum),
+   .input_valid(mac_valid),
    .a(a),
    .b(b),
    .out(mac_out));
