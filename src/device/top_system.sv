@@ -3,7 +3,7 @@
 module top_system #(
     parameter int IO_DATA_WIDTH = 16,
     parameter int ACCUMULATION_WIDTH = 32,
-    parameter int EXT_MEM_HEIGHT = 1<<20,
+    parameter int EXT_MEM_HEIGHT = 1<<8,
     parameter int EXT_MEM_WIDTH = ACCUMULATION_WIDTH,
     parameter int FEATURE_MAP_WIDTH = 1024,
     parameter int FEATURE_MAP_HEIGHT = 1024,
