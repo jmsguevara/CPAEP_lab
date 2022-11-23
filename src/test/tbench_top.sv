@@ -11,7 +11,7 @@ module tbench_top;
 
   localparam int DATA_WIDTH         = 16;
   localparam int ACCUMULATION_WIDTH = 32;
-  localparam int EXT_MEM_HEIGHT     = 1<<20;
+  localparam int EXT_MEM_HEIGHT     = 1<<8;
   localparam int EXT_MEM_WIDTH      = ACCUMULATION_WIDTH;
   localparam int FEATURE_MAP_WIDTH  = 128;
   localparam int FEATURE_MAP_HEIGHT = 128;
