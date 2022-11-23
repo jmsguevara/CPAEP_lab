@@ -67,6 +67,14 @@ module controller_fsm #(
   `REG(32, ch_in);
   `REG(32, ch_out);
 
+  //addr counters (see register.sv for macro)
+  `REG(32, k_v_m);
+  `REG(32, k_h_m);
+  `REG(32, x_m);
+  `REG(32, y_m);
+  `REG(32, ch_in_m);
+  `REG(32, ch_out_m);
+
   logic reset_k_v, reset_k_h, reset_x, reset_y, reset_ch_in, reset_ch_out;
   assign k_v_next = reset_k_v ? 0 : k_v + 1;
   assign k_h_next = reset_k_h ? 0 : k_h + 1;
@@ -75,12 +83,20 @@ module controller_fsm #(
   assign ch_in_next = reset_ch_in ? 0 : ch_in + 1;
   assign ch_out_next = reset_ch_out ? 0 : ch_out + 1;
 
-  assign ky_out = k_v;
-  assign kx_out = k_h;
-  assign outch_out = ch_out;
-  assign inch_out = ch_in;
-  assign y_out = y;
-  assign x_out = x;
+  logic reset_k_v_m, reset_k_h_m, reset_x_m, reset_y_m, reset_ch_in_m, reset_ch_out_m;
+  assign k_v_m_next = reset_k_v_m ? 0 : k_v_m + 1;
+  assign k_h_m_next = reset_k_h_m ? 0 : k_h_m + 1;
+  assign x_m_next = reset_x_m ? 0 : x_m + 1;
+  assign y_m_next = reset_y_m ? 0 : y_m + 1;
+  assign ch_in_m_next = reset_ch_in_m ? 0 : ch_in_m + 1;
+  assign ch_out_m_next = reset_ch_out_m ? 0 : ch_out_m + 1;
+
+  assign ky_out = k_v_m;
+  assign kx_out = k_h_m;
+  assign outch_out = ch_out_m;
+  assign inch_out = ch_in_m;
+  assign y_out = y_m;
+  assign x_out = x_m;
 
   logic last_k_v, last_k_h, last_x, last_y, last_ch_in, last_ch_out;
   assign last_k_v = k_v == KERNEL_SIZE - 1;
@@ -90,12 +106,27 @@ module controller_fsm #(
   assign last_ch_in = ch_in == INPUT_NB_CHANNELS - 1;
   assign last_ch_out = ch_out == OUTPUT_NB_CHANNELS - 1;
 
+  logic last_k_v_m, last_k_h_m, last_x_m, last_y_m, last_ch_in_m, last_ch_out_m;
+  assign last_k_v_m = k_v_m == KERNEL_SIZE - 1;
+  assign last_k_h_m = k_h_m == KERNEL_SIZE - 1;
+  assign last_x_m = x_m == FEATURE_MAP_WIDTH-1;
+  assign last_y_m = y_m == FEATURE_MAP_HEIGHT-1;
+  assign last_ch_in_m = ch_in_m == INPUT_NB_CHANNELS - 1;
+  assign last_ch_out_m = ch_out_m == OUTPUT_NB_CHANNELS - 1;
+
   assign reset_k_v = last_k_v;
   assign reset_k_h = last_k_h;
   assign reset_x = last_x;
   assign reset_y = last_y;
   assign reset_ch_in = last_ch_in;
   assign reset_ch_out = last_ch_out;
+
+  assign reset_k_v_m = last_k_v_m;
+  assign reset_k_h_m = last_k_h_m;
+  assign reset_x_m = last_x_m;
+  assign reset_y_m = last_y_m;
+  assign reset_ch_in_m = last_ch_in_m;
+  assign reset_ch_out_m = last_ch_out_m;
 
   /*
   chosen loop order:
@@ -108,12 +139,19 @@ module controller_fsm #(
               body
   */
   // ==>
-  assign k_h_we    = int_mem_re; //each time a mac is done, or in case of kickstarting the pipeline, k_h_we increments (or resets to 0 if last)
+  assign k_h_we    = mac_valid; //each time a mac is done, or in case of kickstarting the pipeline, k_h_we increments (or resets to 0 if last)
   assign k_v_we    = mac_valid && last_k_h; //only if last of k_h loop
   assign ch_out_we = mac_valid && last_k_h && last_k_v; //only if last of all enclosed loops
   assign ch_in_we  = mac_valid && last_k_h && last_k_v && last_ch_out; //only if last of all enclosed loops
   assign y_we      = mac_valid && last_k_h && last_k_v && last_ch_out && last_ch_in; //only if last of all enclosed loops
   assign x_we      = mac_valid && last_k_h && last_k_v && last_ch_out && last_ch_in && last_y; //only if last of all enclosed loops
+
+  assign k_h_m_we    = int_mem_re; 
+  assign k_v_m_we    = int_mem_re && last_k_h_m; 
+  assign ch_out_m_we = int_mem_re && last_k_h_m && last_k_v_m;
+  assign ch_in_m_we  = int_mem_re && last_k_h_m && last_k_v_m && last_ch_out_m;
+  assign y_m_we      = int_mem_re && last_k_h_m && last_k_v_m && last_ch_out_m && last_ch_in_m;
+  assign x_m_we      = int_mem_re && last_k_h_m && last_k_v_m && last_ch_out_m && last_ch_in_m && last_y_m;
 
   logic last_overall;
   assign last_overall   = last_k_h && last_k_v && last_ch_out && last_ch_in && last_y && last_x;
