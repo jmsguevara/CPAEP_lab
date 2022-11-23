@@ -19,12 +19,12 @@ module mac #(
   //output
   output logic signed [OUTPUT_WIDTH-1:0] out
   );
-  /*
-
-                a -->  *  <-- b
-                       |
-                       |  ____________
-                       \ /          __\______
+  /*assign k_v_next = reset_k_v ? 0 : k_v + 1;
+  assign k_h_next = reset_k_h ? 0 : k_h + 1;
+  assign x_next = reset_x ? 0 : x + 1;
+  assign y_next = reset_y ? 0 : y + 1;
+  assign ch_in_next = reset_ch_in ? 0 : ch_in + 1;
+  assign ch_out_next = reset_ch_out ? 0 : ch_out + 1;_
                         +          /1___0__SEL\ <-- accumulate_internal
                         |           |   \------------ <-- partial_sum_in
                      ___|___________|----------> >> ---> out__

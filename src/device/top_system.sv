@@ -14,8 +14,11 @@ module top_system #(
      input logic arst_n_in,  //asynchronous reset, active low
 
      //system inputs and outputs
-     input logic a_zero_flag,
-     input logic b_zero_flag,
+     input logic int_mem_we,
+     input logic data_ready,
+
+     output logic fsm_done,
+
      input logic [IO_DATA_WIDTH-1:0] a_input,
      input logic a_valid,
      output logic a_ready,
@@ -84,8 +87,11 @@ module top_system #(
     .ext_mem_din(ext_mem_din),
     .ext_mem_write_en(ext_mem_write_en),
 
-    .a_zero_flag(a_zero_flag),
-    .b_zero_flag(b_zero_flag),
+    .int_mem_we(int_mem_we),
+    .data_ready(data_ready),
+
+    .fsm_done(fsm_done),
+    
     .a_input(a_input),
     .a_valid(a_valid),
     .a_ready(a_ready),

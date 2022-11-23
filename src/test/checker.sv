@@ -114,11 +114,12 @@ class Checker #(config_t cfg);
 
         output_correct = (expected == tract_output.output_data);
         no_error_in_full_output_frame = no_error_in_full_output_frame & output_correct;
-        //$display("expected = %h, output %h", expected, tract_output.output_data);
+        
         if(output_correct) begin
           if (verbose) $display("[CHK] Result is correct");
         end else begin
           $display("[CHK] Result is incorrect");
+          $display("expected = %h, output %h", expected, tract_output.output_data);
           $stop;
         end
         count++;

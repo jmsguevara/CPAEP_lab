@@ -58,6 +58,11 @@ module tbench_top;
   ) dut (
    .clk         (intf_i.clk),
    .arst_n_in   (intf_i.arst_n),
+   
+   .int_mem_we  (intf_i.int_mem_we),
+   .data_ready  (intf_i.data_ready),
+
+   .fsm_done    (intf_i.fsm_done),
 
    .a_zero_flag (intf_i.a_zero_flag), 
    .b_zero_flag (intf_i.b_zero_flag), 

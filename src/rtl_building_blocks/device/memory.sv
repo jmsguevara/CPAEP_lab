@@ -21,7 +21,7 @@ module memory #(
 
 
   //storage
-  logic [WIDTH-1:0] data [0:HEIGHT-1];
+  logic [WIDTH-1:0] data [0:HEIGHT-1] = '{default:0};
 
   always @ (posedge clk) begin
     if (write_en) begin

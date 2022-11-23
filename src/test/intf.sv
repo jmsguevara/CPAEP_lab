@@ -13,16 +13,11 @@ interface intf #(
   WHEN ADJUSTING THIS INTERFACE, ADJUST THE ENERGY ADDITIONS AT THE BOTTOM ACCORDINGLY!
   ################################*/
 
-
-
-
-
-
-
-
   // input interface
-  logic a_zero_flag;
-  logic b_zero_flag;
+  logic int_mem_we;
+  logic data_ready;
+
+  logic fsm_done;
 
   logic [cfg.DATA_WIDTH - 1 : 0] a_input;
   logic a_valid;
@@ -45,13 +40,16 @@ interface intf #(
   default clocking cb @(posedge clk);
     default input #0.01 output #0.01;
     output arst_n;
-    output a_zero_flag;
-    output b_zero_flag;
-    output a_input;
+
+    output int_mem_we;
+    output data_ready;
+    input fsm_done;
+
+    output a_input;  // comme l'adresse
     output a_valid;
     input  a_ready;
 
-    output b_input;
+    output b_input;  // comme les données
     output b_valid;
     input  b_ready;
 
@@ -60,7 +58,6 @@ interface intf #(
     input output_x;
     input output_y;
     input output_ch;
-
 
     output start;
     input  running;

@@ -19,6 +19,8 @@ class Driver #(config_t cfg);
     $display("[DRV] ----- Reset Started -----");
      //asynchronous start of reset
     intf_i.cb.start   <= 0;
+    intf_i.cb.int_mem_we <= 0;
+    intf_i.cb.data_ready <= 0;
     intf_i.cb.a_valid <= 0;
     intf_i.cb.a_zero_flag <= 0;
     intf_i.cb.b_zero_flag <= 0;
@@ -30,21 +32,18 @@ class Driver #(config_t cfg);
     $display("[DRV] -----  Reset Ended  -----");
   endtask
   
-//  sparsity exploit:
+  //  sparsity exploit:
 
-//1. reshape feature matrix and generate zero indices (driver)
-//2. reshape kernel matrix and generate zero indices (driver) DONE
-//3. modify driver for loop (order of sending data)
-//4. modify controller fsm (match driver order)
-//5. create on-chip memory for both matrices and zero indices
-//6. create on-chip decoder
+  //1. reshape feature matrix and generate zero indices (driver)
+  //2. reshape kernel matrix and generate zero indices (driver) DONE
+  //3. modify driver for loop (order of sending data)
+  //4. modify controller fsm (match driver order)
+  //5. create on-chip memory for both matrices and zero indices
+  //6. create on-chip decoder
 
-//fetch input to memory -> fetch kernel to memory -> transfer from memory to mac (old fetch) -> mac
+  //fetch input to memory -> fetch kernel to memory -> transfer from memory to mac (old fetch) -> mac
 
-    //kernel matrices instantiation
-    bit [15:0] kernel_nz [$];
-    bit kernel_zeroes [$][$][$][$];
-    bit [7:0] nz_index;
+  logic [15:0] addr;
 
   task run();
     bit first = 1;
@@ -56,31 +55,6 @@ class Driver #(config_t cfg);
 
     $display("[DRV] -----  Start execution -----");
     
-    nz_index = 0;
-    
-    //generate kernel matrices
-    for(int inch=0;inch<cfg.INPUT_NB_CHANNELS; inch++) begin
-        for(int outch=0;outch<cfg.OUTPUT_NB_CHANNELS; outch++) begin
-          for(int ky=0;ky<cfg.KERNEL_SIZE; ky++) begin
-            for(int kx=0;kx<cfg.KERNEL_SIZE; kx++) begin
-              //$display("ky = %h, kx = %h, inch = %h, outch = %h, value = %h", ky, kx, inch, outch, tract_kernel.kernel[ky][kx][inch][outch]);
-              if (tract_kernel.kernel[ky][kx][inch][outch] > 0) begin
-                kernel_nz[nz_index] = tract_kernel.kernel[ky][kx][inch][outch];
-                //$display("index = %h, value = %h", nz_index, kernel_nz[nz_index]);
-                kernel_zeroes[ky][kx][inch][outch] = 1;
-                nz_index++;
-              end
-              else begin
-                kernel_zeroes[ky][kx][inch][outch] = 0;
-              end
-              //$display("ky = %h, kx = %h, inch = %h, outch = %h, value = %h", ky, kx, inch, outch, kernel_zeroes[ky][kx][inch][outch]);
-            end
-          end
-        end
-      end
-      
-    nz_index = 0;
-
     forever begin
       time starttime;
       // Get a transaction with feature from the Generator
@@ -93,55 +67,93 @@ class Driver #(config_t cfg);
       @(intf_i.cb);
       intf_i.cb.start <= 0;
 
-
-
-      $display("[DRV] ----- Driving a new input feature map -----");
-      for(int x=0;x<cfg.FEATURE_MAP_WIDTH; x++) begin
-        $display("[DRV] %.2f %% of the input is transferred", ((x)*100.0)/cfg.FEATURE_MAP_WIDTH);
-        for(int y=0;y<cfg.FEATURE_MAP_HEIGHT; y++) begin
+      $display("[DRV] Sending kernel...");
+      for(int ky=0;ky<cfg.KERNEL_SIZE; ky++) begin
+        for(int kx=0;kx<cfg.KERNEL_SIZE; kx++) begin
           for(int inch=0;inch<cfg.INPUT_NB_CHANNELS; inch++) begin
             for(int outch=0;outch<cfg.OUTPUT_NB_CHANNELS; outch++) begin
-              for(int ky=0;ky<cfg.KERNEL_SIZE; ky++) begin
-                for(int kx=0;kx<cfg.KERNEL_SIZE; kx++) begin
-
-                  //drive a (one word from feature)
-                  intf_i.cb.a_valid <= 1;
-                  if( x+kx-cfg.KERNEL_SIZE/2 >= 0 && x+kx-cfg.KERNEL_SIZE/2 < cfg.FEATURE_MAP_WIDTH
-                    &&y+ky-cfg.KERNEL_SIZE/2 >= 0 && y+ky-cfg.KERNEL_SIZE/2 < cfg.FEATURE_MAP_HEIGHT) begin
-                    assert (!$isunknown(tract_feature.inputs[y+ky-cfg.KERNEL_SIZE/2 ][x+kx-cfg.KERNEL_SIZE/2][inch]));
-
-                    if( tract_feature.inputs[y+ky-cfg.KERNEL_SIZE/2 ][x+kx-cfg.KERNEL_SIZE/2][inch] == 0) begin
-                      intf_i.cb.a_zero_flag <= 1;
-                    end
-                    else begin
-                      intf_i.cb.a_input <= tract_feature.inputs[y+ky-cfg.KERNEL_SIZE/2 ][x+kx-cfg.KERNEL_SIZE/2][inch];
-                    end
-
-                  end else begin
-                    intf_i.cb.a_zero_flag <= 1; // zero padding for boundary cases
-                  end
-
-                  //drive b (one word from kernel)
-                  intf_i.cb.b_valid <= 1;
-                  assert (!$isunknown(tract_kernel.kernel[ky][kx][inch][outch]));
-                  if(tract_kernel.kernel[ky][kx][inch][outch] == 0) begin
-                    intf_i.cb.b_zero_flag <= 1;
-                  end
-                  else begin
-                    intf_i.cb.b_input <= tract_kernel.kernel[ky][kx][inch][outch];
-                  end
-                  @(intf_i.cb iff intf_i.cb.b_ready && intf_i.cb.a_ready);
-                    intf_i.cb.a_zero_flag <= 0;
-                    intf_i.cb.b_zero_flag <= 0;
-                    intf_i.cb.a_valid <= 0;
-                    intf_i.cb.b_valid <= 0;
-                end
+              
+              intf_i.cb.a_valid <= 1;
+              intf_i.cb.b_valid <= 1;
+              if (tract_kernel.kernel[ky][kx][inch][outch] != 0) begin
+                intf_i.cb.int_mem_we <= 1;
+                addr = {1'b1, 6'b0, inch[0], ky[1:0], kx[1:0], outch[3:0]};
+                intf_i.cb.a_input <= addr;
+                intf_i.cb.b_input <= tract_kernel.kernel[ky][kx][inch][outch];
               end
+              else begin
+                intf_i.cb.int_mem_we <= 0;
+              end
+
+              @(intf_i.cb iff intf_i.cb.b_ready && intf_i.cb.a_ready);
+              intf_i.cb.a_valid <= 0;
+              intf_i.cb.b_valid <= 0;
+
             end
           end
         end
       end
 
+      $display("[DRV] Sending upper half of feature map...");
+      // upper half
+      for(int x = 0; x < cfg.FEATURE_MAP_WIDTH / 2; x++) begin
+        $display("x = %d", x);
+        for(int y = 0; y < cfg.FEATURE_MAP_HEIGHT; y++) begin
+          for(int inch = 0; inch<cfg.INPUT_NB_CHANNELS; inch++) begin
+              
+              intf_i.cb.a_valid <= 1;
+              intf_i.cb.b_valid <= 1;
+              if(tract_feature.inputs[y][x][inch] != 0) begin
+                intf_i.cb.int_mem_we <= 1;
+                addr = {1'b0, inch[0], y[6:0], x[6:0]};
+                intf_i.cb.a_input <= addr;
+                intf_i.cb.b_input <= tract_feature.inputs[y][x][inch];
+              end
+              else begin
+                intf_i.cb.int_mem_we <= 0;
+              end
+              @(intf_i.cb iff intf_i.cb.b_ready && intf_i.cb.a_ready);
+              intf_i.cb.a_valid <= 0;
+              intf_i.cb.b_valid <= 0;
+
+          end
+        end
+      end
+
+      $display("[DRV] Sending lower half of feature map...");
+      // lower half
+      for(int x = cfg.FEATURE_MAP_WIDTH / 2; x < cfg.FEATURE_MAP_WIDTH; x++) begin
+        $display("x = %d", x);
+        for(int y = 0; y < cfg.FEATURE_MAP_HEIGHT; y++) begin
+          for(int inch = 0; inch<cfg.INPUT_NB_CHANNELS; inch++) begin
+              
+              intf_i.cb.a_valid <= 1;
+              intf_i.cb.b_valid <= 1;
+              if(tract_feature.inputs[y][x][inch] != 0) begin
+                intf_i.cb.int_mem_we <= 1;
+                addr = {1'b0, inch[0], y[6:0], x[6:0]};
+                intf_i.cb.a_input <= addr;
+                intf_i.cb.b_input <= tract_feature.inputs[y][x][inch];
+              end
+              else begin
+                intf_i.cb.int_mem_we <= 0;
+              end
+              @(intf_i.cb iff intf_i.cb.b_ready && intf_i.cb.a_ready);
+              intf_i.cb.a_valid <= 0;
+              intf_i.cb.b_valid <= 0;
+
+          end
+        end
+      end
+
+      intf_i.cb.int_mem_we <= 0;
+
+      $display("[DRV] Giving data ready signal");
+      intf_i.cb.data_ready <= 1;
+      @(intf_i.cb);
+      intf_i.cb.data_ready <= 0;
+
+      @(intf_i.cb iff intf_i.cb.fsm_done);
 
       $display("\n\n------------------\nLATENCY: input processed in %t\n------------------\n", $time() - starttime);
 
