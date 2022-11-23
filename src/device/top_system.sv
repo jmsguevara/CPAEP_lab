@@ -53,7 +53,7 @@ module top_system #(
   memory #(
     .WIDTH(EXT_MEM_WIDTH),
     .HEIGHT(EXT_MEM_HEIGHT),
-    .USED_AS_EXTERNAL_MEM(1)
+    .USED_AS_EXTERNAL_MEM(0)
   )
   ext_mem
   (.clk(clk),
