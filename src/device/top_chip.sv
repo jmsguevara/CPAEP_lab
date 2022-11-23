@@ -87,7 +87,7 @@ module top_chip #(
 
   memory #(
     .WIDTH(IO_DATA_WIDTH),
-    .HEIGHT(1<<15),
+    .HEIGHT(1<<14),
     .USED_AS_EXTERNAL_MEM(0)
   )
   input_mem // mémoire sur chip pour matrix
@@ -98,7 +98,7 @@ module top_chip #(
     .read_addr(input_addr),
     .qout(input_mem_out),
 
-    .write_addr(a_input[14:0]),
+    .write_addr(a_input[13:0]),
     .write_en(int_mem_we & ~a_input[15]),
     .din(b_input)
   );
