@@ -94,7 +94,7 @@ class Driver #(config_t cfg);
 
       $display("[DRV] Sending upper half of feature map...");
       // upper half
-      for(int x = 0; x < cfg.FEATURE_MAP_WIDTH / 2; x++) begin
+      for(int x = 0; x < cfg.FEATURE_MAP_WIDTH / 2 + 1; x++) begin
         $display("x = %d", x);
         for(int y = 0; y < cfg.FEATURE_MAP_HEIGHT; y++) begin
           for(int inch = 0; inch<cfg.INPUT_NB_CHANNELS; inch++) begin
@@ -120,7 +120,7 @@ class Driver #(config_t cfg);
 
       $display("[DRV] Sending lower half of feature map...");
       // lower half
-      for(int x = cfg.FEATURE_MAP_WIDTH / 2; x < cfg.FEATURE_MAP_WIDTH; x++) begin
+      for(int x = cfg.FEATURE_MAP_WIDTH / 2 - 1; x < cfg.FEATURE_MAP_WIDTH; x++) begin
         $display("x = %d", x);
         for(int y = 0; y < cfg.FEATURE_MAP_HEIGHT; y++) begin
           for(int inch = 0; inch<cfg.INPUT_NB_CHANNELS; inch++) begin
