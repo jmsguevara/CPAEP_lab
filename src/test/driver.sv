@@ -21,6 +21,7 @@ class Driver #(config_t cfg);
     intf_i.cb.start   <= 0;
     intf_i.cb.a_valid <= 0;
     intf_i.cb.a_zero_flag <= 0;
+    intf_i.cb.b_zero_flag <= 0;
     intf_i.cb.b_valid <= 0;
     intf_i.cb.arst_n  <= 0;
     repeat (2) @(intf_i.cb);
@@ -82,9 +83,15 @@ class Driver #(config_t cfg);
                   //drive b (one word from kernel)
                   intf_i.cb.b_valid <= 1;
                   assert (!$isunknown(tract_kernel.kernel[ky][kx][inch][outch]));
-                  intf_i.cb.b_input <= tract_kernel.kernel[ky][kx][inch][outch];
+                  if(tract_kernel.kernel[ky][kx][inch][outch] == 0) begin
+                    intf_i.cb.b_zero_flag <= 1;
+                  end
+                  else begin
+                    intf_i.cb.b_input <= tract_kernel.kernel[ky][kx][inch][outch];
+                  end
                   @(intf_i.cb iff intf_i.cb.b_ready && intf_i.cb.a_ready);
                     intf_i.cb.a_zero_flag <= 0;
+                    intf_i.cb.b_zero_flag <= 0;
                     intf_i.cb.a_valid <= 0;
                     intf_i.cb.b_valid <= 0;
                 end

@@ -22,6 +22,7 @@ interface intf #(
 
   // input interface
   logic a_zero_flag;
+  logic b_zero_flag;
 
   logic [cfg.DATA_WIDTH - 1 : 0] a_input;
   logic a_valid;
@@ -45,6 +46,7 @@ interface intf #(
     default input #0.01 output #0.01;
     output arst_n;
     output a_zero_flag;
+    output b_zero_flag;
     output a_input;
     output a_valid;
     input  a_ready;
@@ -73,7 +75,7 @@ interface intf #(
     end
   end
   always @ (posedge clk) begin
-    if(b_valid && b_ready) begin
+    if(b_valid && b_ready && ~b_zero_flag) begin
       tbench_top.energy += 1*(cfg.DATA_WIDTH);
     end
   end

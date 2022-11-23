@@ -60,6 +60,7 @@ module tbench_top;
    .arst_n_in   (intf_i.arst_n),
 
    .a_zero_flag (intf_i.a_zero_flag), 
+   .b_zero_flag (intf_i.b_zero_flag), 
    .a_input     (intf_i.a_input),
    .b_input     (intf_i.b_input),
    .a_valid     (intf_i.a_valid),
