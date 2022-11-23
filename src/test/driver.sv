@@ -42,6 +42,7 @@ class Driver #(config_t cfg);
   //fetch input to memory -> fetch kernel to memory -> transfer from memory to mac (old fetch) -> mac
 
   logic [15:0] addr;
+  int x;
 
   task run();
     bit first = 1;
@@ -121,7 +122,7 @@ class Driver #(config_t cfg);
       intf_i.cb.int_mem_we <= 0;
 
       // overlap row: 64
-      int x = 64;
+      x = 64;
       for(int y = 0; y < cfg.FEATURE_MAP_HEIGHT; y++) begin
           for(int inch = 0; inch<cfg.INPUT_NB_CHANNELS; inch++) begin
               
@@ -152,7 +153,7 @@ class Driver #(config_t cfg);
 
       $display("[DRV] Sending lower half of feature map...");
       // overlap row: 63
-      int x = 63;
+      x = 63;
       for(int y = 0; y < cfg.FEATURE_MAP_HEIGHT; y++) begin
           for(int inch = 0; inch<cfg.INPUT_NB_CHANNELS; inch++) begin
               
