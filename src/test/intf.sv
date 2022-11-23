@@ -21,6 +21,8 @@ interface intf #(
 
 
   // input interface
+  logic a_zero_flag;
+
   logic [cfg.DATA_WIDTH - 1 : 0] a_input;
   logic a_valid;
   logic a_ready;
@@ -42,6 +44,7 @@ interface intf #(
   default clocking cb @(posedge clk);
     default input #0.01 output #0.01;
     output arst_n;
+    output a_zero_flag;
     output a_input;
     output a_valid;
     input  a_ready;
