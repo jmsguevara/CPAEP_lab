@@ -11,7 +11,7 @@ module tbench_top;
 
   localparam int DATA_WIDTH         = 16;
   localparam int ACCUMULATION_WIDTH = 32;
-  localparam int EXT_MEM_HEIGHT     = 1<<20;
+  localparam int EXT_MEM_HEIGHT     = 1<<8;
   localparam int EXT_MEM_WIDTH      = ACCUMULATION_WIDTH;
   localparam int FEATURE_MAP_WIDTH  = 128;
   localparam int FEATURE_MAP_HEIGHT = 128;
@@ -59,6 +59,8 @@ module tbench_top;
    .clk         (intf_i.clk),
    .arst_n_in   (intf_i.arst_n),
 
+   .a_zero_flag (intf_i.a_zero_flag), 
+   .b_zero_flag (intf_i.b_zero_flag), 
    .a_input     (intf_i.a_input),
    .b_input     (intf_i.b_input),
    .a_valid     (intf_i.a_valid),

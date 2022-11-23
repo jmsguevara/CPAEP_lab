@@ -3,7 +3,7 @@
 module top_system #(
     parameter int IO_DATA_WIDTH = 16,
     parameter int ACCUMULATION_WIDTH = 32,
-    parameter int EXT_MEM_HEIGHT = 1<<20,
+    parameter int EXT_MEM_HEIGHT = 1<<8,
     parameter int EXT_MEM_WIDTH = ACCUMULATION_WIDTH,
     parameter int FEATURE_MAP_WIDTH = 1024,
     parameter int FEATURE_MAP_HEIGHT = 1024,
@@ -14,6 +14,8 @@ module top_system #(
      input logic arst_n_in,  //asynchronous reset, active low
 
      //system inputs and outputs
+     input logic a_zero_flag,
+     input logic b_zero_flag,
      input logic [IO_DATA_WIDTH-1:0] a_input,
      input logic a_valid,
      output logic a_ready,
@@ -48,7 +50,7 @@ module top_system #(
   memory #(
     .WIDTH(EXT_MEM_WIDTH),
     .HEIGHT(EXT_MEM_HEIGHT),
-    .USED_AS_EXTERNAL_MEM(1)
+    .USED_AS_EXTERNAL_MEM(0)
   )
   ext_mem
   (.clk(clk),
@@ -82,6 +84,8 @@ module top_system #(
     .ext_mem_din(ext_mem_din),
     .ext_mem_write_en(ext_mem_write_en),
 
+    .a_zero_flag(a_zero_flag),
+    .b_zero_flag(b_zero_flag),
     .a_input(a_input),
     .a_valid(a_valid),
     .a_ready(a_ready),

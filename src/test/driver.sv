@@ -20,6 +20,8 @@ class Driver #(config_t cfg);
      //asynchronous start of reset
     intf_i.cb.start   <= 0;
     intf_i.cb.a_valid <= 0;
+    intf_i.cb.a_zero_flag <= 0;
+    intf_i.cb.b_zero_flag <= 0;
     intf_i.cb.b_valid <= 0;
     intf_i.cb.arst_n  <= 0;
     repeat (2) @(intf_i.cb);
@@ -107,18 +109,30 @@ class Driver #(config_t cfg);
                   if( x+kx-cfg.KERNEL_SIZE/2 >= 0 && x+kx-cfg.KERNEL_SIZE/2 < cfg.FEATURE_MAP_WIDTH
                     &&y+ky-cfg.KERNEL_SIZE/2 >= 0 && y+ky-cfg.KERNEL_SIZE/2 < cfg.FEATURE_MAP_HEIGHT) begin
                     assert (!$isunknown(tract_feature.inputs[y+ky-cfg.KERNEL_SIZE/2 ][x+kx-cfg.KERNEL_SIZE/2][inch]));
-                    intf_i.cb.a_input <= tract_feature.inputs[y+ky-cfg.KERNEL_SIZE/2 ][x+kx-cfg.KERNEL_SIZE/2][inch];
+
+                    if( tract_feature.inputs[y+ky-cfg.KERNEL_SIZE/2 ][x+kx-cfg.KERNEL_SIZE/2][inch] == 0) begin
+                      intf_i.cb.a_zero_flag <= 1;
+                    end
+                    else begin
+                      intf_i.cb.a_input <= tract_feature.inputs[y+ky-cfg.KERNEL_SIZE/2 ][x+kx-cfg.KERNEL_SIZE/2][inch];
+                    end
+
                   end else begin
-                    intf_i.cb.a_input <= 0; // zero padding for boundary cases
+                    intf_i.cb.a_zero_flag <= 1; // zero padding for boundary cases
                   end
-                  //@(intf_i.cb iff intf_i.cb.a_ready);
-                  //intf_i.cb.a_valid <= 0;
 
                   //drive b (one word from kernel)
                   intf_i.cb.b_valid <= 1;
                   assert (!$isunknown(tract_kernel.kernel[ky][kx][inch][outch]));
-                  intf_i.cb.b_input <= tract_kernel.kernel[ky][kx][inch][outch];
+                  if(tract_kernel.kernel[ky][kx][inch][outch] == 0) begin
+                    intf_i.cb.b_zero_flag <= 1;
+                  end
+                  else begin
+                    intf_i.cb.b_input <= tract_kernel.kernel[ky][kx][inch][outch];
+                  end
                   @(intf_i.cb iff intf_i.cb.b_ready && intf_i.cb.a_ready);
+                    intf_i.cb.a_zero_flag <= 0;
+                    intf_i.cb.b_zero_flag <= 0;
                     intf_i.cb.a_valid <= 0;
                     intf_i.cb.b_valid <= 0;
                 end
