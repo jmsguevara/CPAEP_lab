@@ -108,7 +108,7 @@ module controller_fsm #(
               body
   */
   // ==>
-  assign k_h_we    = mac_valid; //each time a mac is done, or in case of kickstarting the pipeline, k_h_we increments (or resets to 0 if last)
+  assign k_h_we    = int_mem_re; //each time a mac is done, or in case of kickstarting the pipeline, k_h_we increments (or resets to 0 if last)
   assign k_v_we    = mac_valid && last_k_h; //only if last of k_h loop
   assign ch_out_we = mac_valid && last_k_h && last_k_v; //only if last of all enclosed loops
   assign ch_in_we  = mac_valid && last_k_h && last_k_v && last_ch_out; //only if last of all enclosed loops
