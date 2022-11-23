@@ -72,6 +72,7 @@ class Driver #(config_t cfg);
                       intf_i.cb.a_zero_flag <= 1;
                     end
                     else begin
+                      intf_i.cb.a_zero_flag <= 0;
                       intf_i.cb.a_input <= tract_feature.inputs[y+ky-cfg.KERNEL_SIZE/2 ][x+kx-cfg.KERNEL_SIZE/2][inch];
                     end
 
