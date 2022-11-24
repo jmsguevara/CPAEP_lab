@@ -139,8 +139,8 @@ module top_chip #(
   (
     .clk(clk),
 
-    .read_en(0),
-    .read_addr(0),
+    .read_en(input_switch),
+    .read_addr({inch_out[0], y_aux[6:0]}),
     .qout(overlap_out),
 
     .write_addr(a_input[7:0]),
