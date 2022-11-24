@@ -80,6 +80,7 @@ module top_chip #(
 
   logic [14:0] input_addr;
   logic [8:0] kernel_addr;
+  logic [7:0] overlap_addr;
 
   logic [7:0] y_aux;
   assign y_aux = y_out[6:0]+ky_out[1:0] - KERNEL_SIZE/2;
@@ -90,10 +91,12 @@ module top_chip #(
 
   assign input_switch = (x_out == 63 && x_aux == 64) || (x_out == 64 && x_aux == 127);
 
+  
   assign a_next_in = input_switch ? overlap_out : input_mem_out;
 
   assign input_addr = {inch_out[0], y_aux[6:0], x_aux[5:0]};
   assign kernel_addr = {inch_out[0], ky_out[1:0], kx_out[1:0], outch_out[3:0]};
+  assign overlap_addr = {inch_out[0], y_aux[6:0]};
 
   memory #(
     .WIDTH(IO_DATA_WIDTH),
@@ -141,7 +144,7 @@ module top_chip #(
     .clk(clk),
 
     .read_en(input_switch && overlap_cache_re),
-    .read_addr({inch_out[0], y_aux[6:0]}),
+    .read_addr(overlap_addr),
     .qout(overlap_out),
 
     .write_addr(a_input[7:0]),
