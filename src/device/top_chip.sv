@@ -100,7 +100,7 @@ module top_chip #(
   assign overlap_addr = {inch_out[0], y_aux[6:0]};
 
   logic b_in;
-  assign b_in <= b_zero ? 0 : b_input;
+  assign b_in = b_zero ? 0 : b_input;
 
   memory #(
     .WIDTH(IO_DATA_WIDTH),
