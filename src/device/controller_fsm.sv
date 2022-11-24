@@ -244,7 +244,7 @@ module controller_fsm #(
         int_mem_re = 1;
         write_a = 1;
         write_b = 1;
-        next_state = last_overall ? IDLE : MAC;
+        next_state = last_overall ? IDLE : MAC2;
       end
     endcase
   end
