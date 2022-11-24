@@ -81,10 +81,10 @@ module top_chip #(
 
   logic [7:0] y_aux;
   assign y_aux = y_out[6:0]+ky_out[1:0] - KERNEL_SIZE/2;
-  logic [7:0] x_aux;
-  assign x_aux = x_out[6:0]+kx_out[1:0] - KERNEL_SIZE/2;
+  logic [6:0] x_aux;
+  assign x_aux = x_out[5:0]+kx_out[1:0] - KERNEL_SIZE/2;
 
-  assign input_addr = {inch_out[0], y_aux[6:0], x_aux[6:0]};
+  assign input_addr = {inch_out[0], y_aux[6:0], x_aux[5:0]};
   assign kernel_addr = {inch_out[0], ky_out[1:0], kx_out[1:0], outch_out[3:0]};
 
   memory #(
@@ -198,7 +198,7 @@ module top_chip #(
   `REG(IO_DATA_WIDTH, a);
   `REG(IO_DATA_WIDTH, b);
   //assign a_next = input_mem_out;
-  assign a_next = (~x_aux[7] && x_aux[6:0] < FEATURE_MAP_WIDTH
+  assign a_next = (~x_aux[6] && x_aux[5:0] < FEATURE_MAP_WIDTH
                     && ~y_aux[7] && y_aux[6:0] < FEATURE_MAP_HEIGHT) ? input_mem_out : 0;
   assign b_next = kernel_mem_out;
   assign a_we = write_a;
