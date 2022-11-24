@@ -155,7 +155,7 @@ module controller_fsm #(
 
   logic last_overall;
   assign last_overall   = last_k_h && last_k_v && last_ch_out && last_ch_in && last_y && last_x;
-  assign fsm_done = last_overall;
+  assign fsm_done = last_overall || (output_valid && (x == 32'd64)); // Actually, FSM is not done. Trigger at the end of each half of the feature map.
 
   `REG(1, pp_y_we);
   assign pp_y_we_next = y_we;
@@ -226,9 +226,18 @@ module controller_fsm #(
         int_mem_re = 1;
         write_a = 1;
         write_b = 1;
-        next_state = MAC;
+        next_state = (x == 32'd64) ? MAC2 : MAC;
       end
       MAC: begin
+        mac_valid = 1;
+        a_ready = 1;
+        b_ready = 1;
+        int_mem_re = 1;
+        write_a = 1;
+        write_b = 1;
+        next_state = (output_valid && (x == 32'd64)) ? LOAD : MAC;
+      end
+      MAC2: begin
         mac_valid = 1;
         a_ready = 1;
         b_ready = 1;
