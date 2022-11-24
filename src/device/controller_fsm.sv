@@ -35,17 +35,17 @@ module controller_fsm #(
   output logic mac_accumulate_internal,
   output logic mac_accumulate_with_0,
 
-  output logic [31:0] ky_out,
-  output logic [31:0] kx_out,
-  output logic [31:0] outch_out,
-  output logic [31:0] inch_out,
-  output logic [31:0] y_out,
-  output logic [31:0] x_out,
+  output logic [7:0] ky_out,
+  output logic [7:0] kx_out,
+  output logic [7:0] outch_out,
+  output logic [7:0] inch_out,
+  output logic [7:0] y_out,
+  output logic [7:0] x_out,
 
   output logic output_valid,
-  output logic [32-1:0] output_x,
-  output logic [32-1:0] output_y,
-  output logic [32-1:0] output_ch
+  output logic [8-1:0] output_x,
+  output logic [8-1:0] output_y,
+  output logic [8-1:0] output_ch
 
   );
 
@@ -61,20 +61,20 @@ module controller_fsm #(
   end
 
   //loop counters (see register.sv for macro)
-  `REG(32, k_v);
-  `REG(32, k_h);
-  `REG(32, x);
-  `REG(32, y);
-  `REG(32, ch_in);
-  `REG(32, ch_out);
+  `REG(8, k_v);
+  `REG(8, k_h);
+  `REG(8, x);
+  `REG(8, y);
+  `REG(8, ch_in);
+  `REG(8, ch_out);
 
   //addr counters (see register.sv for macro)
-  `REG(32, k_v_m);
-  `REG(32, k_h_m);
-  `REG(32, x_m);
-  `REG(32, y_m);
-  `REG(32, ch_in_m);
-  `REG(32, ch_out_m);
+  `REG(8, k_v_m);
+  `REG(8, k_h_m);
+  `REG(8, x_m);
+  `REG(8, y_m);
+  `REG(8, ch_in_m);
+  `REG(8, ch_out_m);
 
   logic reset_k_v, reset_k_h, reset_x, reset_y, reset_ch_in, reset_ch_out;
   assign k_v_next = reset_k_v ? 0 : k_v + 1;
@@ -156,7 +156,7 @@ module controller_fsm #(
 
   logic last_overall;
   assign last_overall   = last_k_h && last_k_v && last_ch_out && last_ch_in && last_y && last_x;
-  assign fsm_done = last_overall || ((x == 32'd64) && (current_state == MAC)); // Actually, FSM is not done. Trigger at the end of each half of the feature map.
+  assign fsm_done = last_overall || ((x == 8'd64) && (current_state == MAC)); // Actually, FSM is not done. Trigger at the end of each half of the feature map.
 
   `REG(32, prev_ch_out);
   assign prev_ch_out_next = ch_out;
@@ -179,15 +179,15 @@ module controller_fsm #(
   assign mac_accumulate_internal = ! (k_v == 0 && k_h == 0);
   assign mac_accumulate_with_0   = (ch_in ==0 && k_v == 0 && k_h == 0);
 
-  register #(.WIDTH(32)) output_x_r (.clk(clk), .arst_n_in(arst_n_in),
+  register #(.WIDTH(8)) output_x_r (.clk(clk), .arst_n_in(arst_n_in),
                                                 .din(x),
                                                 .qout(output_x),
                                                 .we(mac_valid && last_ch_in && last_k_v && last_k_h));
-  register #(.WIDTH(32)) output_y_r (.clk(clk), .arst_n_in(arst_n_in),
+  register #(.WIDTH(8)) output_y_r (.clk(clk), .arst_n_in(arst_n_in),
                                                 .din(y),
                                                 .qout(output_y),
                                                 .we(mac_valid && last_ch_in && last_k_v && last_k_h));
-  register #(.WIDTH(32)) output_ch_r (.clk(clk), .arst_n_in(arst_n_in),
+  register #(.WIDTH(8)) output_ch_r (.clk(clk), .arst_n_in(arst_n_in),
                                                 .din(ch_out),
                                                 .qout(output_ch),
                                                 .we(mac_valid && last_ch_in && last_k_v && last_k_h));
