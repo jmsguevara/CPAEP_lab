@@ -153,7 +153,7 @@ module top_chip #(
 
     .write_addr(a_input[7:0]),
     .write_en(overlap_cache_we),
-    .din(b_input)
+    .din(b_in)
   );
 
   controller_fsm #(
