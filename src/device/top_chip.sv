@@ -54,6 +54,7 @@ module top_chip #(
   logic write_b;
   
   logic int_mem_re;
+  logic overlap_cache_re;
 
   logic mac_valid;
   logic mac_accumulate_internal;
@@ -139,7 +140,7 @@ module top_chip #(
   (
     .clk(clk),
 
-    .read_en(input_switch),
+    .read_en(input_switch && overlap_cache_re),
     .read_addr({inch_out[0], y_aux[6:0]}),
     .qout(overlap_out),
 
@@ -169,6 +170,7 @@ module top_chip #(
 
   .data_ready(data_ready),
   .int_mem_re(int_mem_re),
+  .overlap_cache_re(overlap_cache_re),
 
   .fsm_done(fsm_done),
 

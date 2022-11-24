@@ -21,6 +21,7 @@ module controller_fsm #(
   //datapad control interface & external handshaking communication of a and b
   input logic data_ready,
   output logic int_mem_re,
+  output logic overlap_cache_re;
 
   output logic fsm_done,
 
@@ -205,6 +206,7 @@ module controller_fsm #(
     a_ready = 0;
     b_ready = 0;
     int_mem_re = 0;
+    overlap_cache_re = 0;
 
     case (current_state)
       IDLE: begin
@@ -220,6 +222,7 @@ module controller_fsm #(
         a_ready = 1;
         b_ready = 1;
         int_mem_re = 1;
+        overlap_cache_re = 1;
         write_a = 1;
         write_b = 1;
         next_state = (x == 32'd64) ? MAC2 : MAC;
@@ -229,6 +232,7 @@ module controller_fsm #(
         a_ready = 1;
         b_ready = 1;
         int_mem_re = 1;
+        overlap_cache_re = 1;
         write_a = 1;
         write_b = 1;
         next_state = (output_valid && (x == 32'd64)) ? LOAD : MAC;
@@ -238,6 +242,7 @@ module controller_fsm #(
         a_ready = 1;
         b_ready = 1;
         int_mem_re = 1;
+        overlap_cache_re = 1;
         write_a = 1;
         write_b = 1;
         next_state = last_overall ? IDLE : MAC2;
