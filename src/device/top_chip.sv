@@ -99,7 +99,7 @@ module top_chip #(
   assign kernel_addr = {inch_out[0], ky_out[1:0], kx_out[1:0], outch_out[3:0]};
   assign overlap_addr = {inch_out[0], y_aux[6:0]};
 
-  logic b_in;
+  logic [IO_DATA_WIDTH-1:0] b_in;
   assign b_in = b_zero ? 0 : b_input;
 
   memory #(
