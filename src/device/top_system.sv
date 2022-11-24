@@ -57,7 +57,7 @@ module top_system #(
     .HEIGHT(EXT_MEM_HEIGHT),
     .USED_AS_EXTERNAL_MEM(0)
   )
-  ext_mem
+  ext_mem 
   (.clk(clk),
   .read_addr(ext_mem_read_addr),
   .read_en(ext_mem_read_en),
@@ -65,7 +65,7 @@ module top_system #(
   .write_addr(ext_mem_write_addr),
   .din(ext_mem_din),
   .write_en(ext_mem_write_en)
-  );
+  ); // on-chip mem for partial sum, initially it was external memory
 
   top_chip #(
   .IO_DATA_WIDTH(IO_DATA_WIDTH),

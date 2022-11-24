@@ -71,12 +71,12 @@ module top_chip #(
   logic [IO_DATA_WIDTH-1:0] overlap_out;
   logic [IO_DATA_WIDTH-1:0] a_next_in;
 
-  logic [31:0] ky_out;
-  logic [31:0] kx_out;
-  logic [31:0] outch_out;
-  logic [31:0] inch_out;
-  logic [31:0] y_out;
-  logic [31:0] x_out;
+  logic [7:0] ky_out;
+  logic [7:0] kx_out;
+  logic [7:0] outch_out;
+  logic [7:0] inch_out;
+  logic [7:0] y_out;
+  logic [7:0] x_out;
 
 
   logic [14:0] input_addr;
