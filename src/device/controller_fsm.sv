@@ -48,7 +48,7 @@ module controller_fsm #(
 
   );
 
-  typedef enum {IDLE, LOAD, FETCH, MAC} fsm_state;
+  typedef enum {IDLE, LOAD, FETCH, MAC, MAC2} fsm_state;
   fsm_state current_state;
   fsm_state next_state;
   always @ (posedge clk or negedge arst_n_in) begin
@@ -155,7 +155,7 @@ module controller_fsm #(
 
   logic last_overall;
   assign last_overall   = last_k_h && last_k_v && last_ch_out && last_ch_in && last_y && last_x;
-  assign fsm_done = last_overall || (output_valid && (x == 32'd64)); // Actually, FSM is not done. Trigger at the end of each half of the feature map.
+  assign fsm_done = last_overall || ((x == 32'd64) && current_state == MAC); // Actually, FSM is not done. Trigger at the end of each half of the feature map.
 
   `REG(1, pp_y_we);
   assign pp_y_we_next = y_we;
