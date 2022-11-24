@@ -27,6 +27,7 @@ module top_chip #(
    // write-enable driver <-> internal memory
    input logic int_mem_we,
    input logic overlap_cache_we,
+   input logic b_zero,
    input logic data_ready,
 
    output logic fsm_done,
@@ -91,7 +92,7 @@ module top_chip #(
 
   assign input_switch = (x_out == 63 && x_aux == 64) || (x_out == 64 && x_aux == 127);
 
-  
+
   assign a_next_in = input_switch ? overlap_out : input_mem_out;
 
   assign input_addr = {inch_out[0], y_aux[6:0], x_aux[5:0]};
@@ -113,7 +114,7 @@ module top_chip #(
 
     .write_addr(a_input[13:0]),
     .write_en(int_mem_we & ~a_input[15]),
-    .din(b_input)
+    .din(b_zero ? 0 : b_input)
   );
 
   memory #(
