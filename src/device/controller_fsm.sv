@@ -21,7 +21,7 @@ module controller_fsm #(
   //datapad control interface & external handshaking communication of a and b
   input logic data_ready,
   output logic int_mem_re,
-  output logic overlap_cache_re;
+  output logic overlap_cache_re,
 
   output logic fsm_done,
 
