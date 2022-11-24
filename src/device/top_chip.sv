@@ -87,7 +87,7 @@ module top_chip #(
 
   logic input_switch;
 
-  assign input_switch = (x_out == 63 && x_aux == 64) || (x_out == 64 && x_aux == 63);
+  assign input_switch = (x_out == 63 && x_aux == 64) || (x_out == 64 && x_aux == 127);
 
   assign a_next_in = input_switch ? overlap_out : input_mem_out;
 
