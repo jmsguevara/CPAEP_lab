@@ -122,6 +122,14 @@ class Driver #(config_t cfg);
 
       intf_i.cb.int_mem_we <= 0;
 
+      $display("[DRV] Giving data ready signal");
+      intf_i.cb.data_ready <= 1;
+      @(intf_i.cb);
+      intf_i.cb.data_ready <= 0;
+
+      // block until calculation is done
+      @(intf_i.cb iff intf_i.cb.fsm_done);
+
       // overlap row: 64
       x = 64;
       for(int y = 0; y < cfg.FEATURE_MAP_HEIGHT; y++) begin
@@ -148,13 +156,7 @@ class Driver #(config_t cfg);
       intf_i.cb.overlap_cache_we <= 0;
 
 
-      $display("[DRV] Giving data ready signal");
-      intf_i.cb.data_ready <= 1;
-      @(intf_i.cb);
-      intf_i.cb.data_ready <= 0;
-
-      // block until calculation is done
-      @(intf_i.cb iff intf_i.cb.fsm_done);
+      
 
       $display("[DRV] Sending lower half of feature map...");
       // overlap row: 63
