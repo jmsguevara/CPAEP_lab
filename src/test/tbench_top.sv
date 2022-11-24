@@ -60,6 +60,8 @@ module tbench_top;
    .arst_n_in   (intf_i.arst_n),
    
    .int_mem_we  (intf_i.int_mem_we),
+   .overlap_cache_we (intf_i.overlap_cache_we),
+   .b_zero      (intf_i.b_zero),
    .data_ready  (intf_i.data_ready),
 
    .fsm_done    (intf_i.fsm_done),

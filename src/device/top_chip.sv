@@ -26,6 +26,8 @@ module top_chip #(
 
    // write-enable driver <-> internal memory
    input logic int_mem_we,
+   input logic overlap_cache_we,
+   input logic b_zero,
    input logic data_ready,
 
    output logic fsm_done,
@@ -53,6 +55,7 @@ module top_chip #(
   logic write_b;
   
   logic int_mem_re;
+  logic overlap_cache_re;
 
   logic mac_valid;
   logic mac_accumulate_internal;
@@ -65,29 +68,43 @@ module top_chip #(
 
   logic [IO_DATA_WIDTH-1:0] input_mem_out;
   logic [IO_DATA_WIDTH-1:0] kernel_mem_out;
+  logic [IO_DATA_WIDTH-1:0] overlap_out;
+  logic [IO_DATA_WIDTH-1:0] a_next_in;
 
-  logic [31:0] ky_out;
-  logic [31:0] kx_out;
-  logic [31:0] outch_out;
-  logic [31:0] inch_out;
-  logic [31:0] y_out;
-  logic [31:0] x_out;
+  logic [7:0] ky_out;
+  logic [7:0] kx_out;
+  logic [7:0] outch_out;
+  logic [7:0] inch_out;
+  logic [7:0] y_out;
+  logic [7:0] x_out;
 
 
   logic [14:0] input_addr;
   logic [8:0] kernel_addr;
+  logic [7:0] overlap_addr;
 
   logic [7:0] y_aux;
   assign y_aux = y_out[6:0]+ky_out[1:0] - KERNEL_SIZE/2;
-  logic [7:0] x_aux;
-  assign x_aux = x_out[6:0]+kx_out[1:0] - KERNEL_SIZE/2;
+  logic [6:0] x_aux;
+  assign x_aux = x_out[5:0]+kx_out[1:0] - KERNEL_SIZE/2;
 
-  assign input_addr = {inch_out[0], y_aux[6:0], x_aux[6:0]};
+  logic input_switch;
+
+  assign input_switch = (x_out == 63 && x_aux == 64) || (x_out == 64 && x_aux == 127);
+
+
+  assign a_next_in = input_switch ? overlap_out : input_mem_out;
+
+  assign input_addr = {inch_out[0], y_aux[6:0], x_aux[5:0]};
   assign kernel_addr = {inch_out[0], ky_out[1:0], kx_out[1:0], outch_out[3:0]};
+  assign overlap_addr = {inch_out[0], y_aux[6:0]};
+
+  logic [IO_DATA_WIDTH-1:0] b_in;
+  assign b_in = b_zero ? 0 : b_input;
 
   memory #(
     .WIDTH(IO_DATA_WIDTH),
-    .HEIGHT(1<<15),
+    .HEIGHT(1<<14),
     .USED_AS_EXTERNAL_MEM(0)
   )
   input_mem // mémoire sur chip pour matrix
@@ -98,9 +115,9 @@ module top_chip #(
     .read_addr(input_addr),
     .qout(input_mem_out),
 
-    .write_addr(a_input[14:0]),
+    .write_addr(a_input[13:0]),
     .write_en(int_mem_we & ~a_input[15]),
-    .din(b_input)
+    .din(b_in)
   );
 
   memory #(
@@ -119,6 +136,24 @@ module top_chip #(
     .write_addr(a_input[8:0]),
     .write_en(int_mem_we & a_input[15]),
     .din(b_input)
+  );
+
+  memory #(
+    .WIDTH(IO_DATA_WIDTH),
+    .HEIGHT(1<<8),
+    .USED_AS_EXTERNAL_MEM(0)
+  )
+  overlap_cache
+  (
+    .clk(clk),
+
+    .read_en(input_switch && overlap_cache_re),
+    .read_addr(overlap_addr),
+    .qout(overlap_out),
+
+    .write_addr(a_input[7:0]),
+    .write_en(overlap_cache_we),
+    .din(b_in)
   );
 
   controller_fsm #(
@@ -142,6 +177,7 @@ module top_chip #(
 
   .data_ready(data_ready),
   .int_mem_re(int_mem_re),
+  .overlap_cache_re(overlap_cache_re),
 
   .fsm_done(fsm_done),
 
@@ -178,8 +214,8 @@ module top_chip #(
   `REG(IO_DATA_WIDTH, a);
   `REG(IO_DATA_WIDTH, b);
   //assign a_next = input_mem_out;
-  assign a_next = (~x_aux[7] && x_aux[6:0] < FEATURE_MAP_WIDTH
-                    && ~y_aux[7] && y_aux[6:0] < FEATURE_MAP_HEIGHT) ? input_mem_out : 0;
+  assign a_next = (((~x_aux[6] && x_aux[5:0] < FEATURE_MAP_WIDTH) || input_switch)
+                    && ~y_aux[7] && y_aux[6:0] < FEATURE_MAP_HEIGHT) ? a_next_in : 0;
   assign b_next = kernel_mem_out;
   assign a_we = write_a;
   assign b_we = write_b;

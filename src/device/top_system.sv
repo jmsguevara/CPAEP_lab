@@ -15,6 +15,8 @@ module top_system #(
 
      //system inputs and outputs
      input logic int_mem_we,
+     input logic overlap_cache_we,
+     input logic b_zero,
      input logic data_ready,
 
      output logic fsm_done,
@@ -55,7 +57,7 @@ module top_system #(
     .HEIGHT(EXT_MEM_HEIGHT),
     .USED_AS_EXTERNAL_MEM(0)
   )
-  ext_mem
+  ext_mem 
   (.clk(clk),
   .read_addr(ext_mem_read_addr),
   .read_en(ext_mem_read_en),
@@ -63,7 +65,7 @@ module top_system #(
   .write_addr(ext_mem_write_addr),
   .din(ext_mem_din),
   .write_en(ext_mem_write_en)
-  );
+  ); // on-chip mem for partial sum, initially it was external memory
 
   top_chip #(
   .IO_DATA_WIDTH(IO_DATA_WIDTH),
@@ -88,6 +90,8 @@ module top_system #(
     .ext_mem_write_en(ext_mem_write_en),
 
     .int_mem_we(int_mem_we),
+    .overlap_cache_we(overlap_cache_we),
+    .b_zero(b_zero),
     .data_ready(data_ready),
 
     .fsm_done(fsm_done),

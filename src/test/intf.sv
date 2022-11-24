@@ -15,6 +15,8 @@ interface intf #(
 
   // input interface
   logic int_mem_we;
+  logic overlap_cache_we;
+  logic b_zero;
   logic data_ready;
 
   logic fsm_done;
@@ -42,6 +44,8 @@ interface intf #(
     output arst_n;
 
     output int_mem_we;
+    output overlap_cache_we;
+    output b_zero;
     output data_ready;
     input fsm_done;
 
@@ -72,7 +76,7 @@ interface intf #(
     end
   end
   always @ (posedge clk) begin
-    if(b_valid && b_ready && ~b_zero_flag) begin
+    if(b_valid && b_ready && ~b_zero) begin
       tbench_top.energy += 1*(cfg.DATA_WIDTH);
     end
   end

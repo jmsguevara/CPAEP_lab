@@ -21,6 +21,7 @@ module controller_fsm #(
   //datapad control interface & external handshaking communication of a and b
   input logic data_ready,
   output logic int_mem_re,
+  output logic overlap_cache_re,
 
   output logic fsm_done,
 
@@ -34,21 +35,21 @@ module controller_fsm #(
   output logic mac_accumulate_internal,
   output logic mac_accumulate_with_0,
 
-  output logic [31:0] ky_out,
-  output logic [31:0] kx_out,
-  output logic [31:0] outch_out,
-  output logic [31:0] inch_out,
-  output logic [31:0] y_out,
-  output logic [31:0] x_out,
+  output logic [7:0] ky_out,
+  output logic [7:0] kx_out,
+  output logic [7:0] outch_out,
+  output logic [7:0] inch_out,
+  output logic [7:0] y_out,
+  output logic [7:0] x_out,
 
   output logic output_valid,
-  output logic [32-1:0] output_x,
-  output logic [32-1:0] output_y,
-  output logic [32-1:0] output_ch
+  output logic [8-1:0] output_x,
+  output logic [8-1:0] output_y,
+  output logic [8-1:0] output_ch
 
   );
 
-  typedef enum {IDLE, LOAD, FETCH, MAC} fsm_state;
+  typedef enum {IDLE, LOAD, FETCH, MAC, MAC2} fsm_state;
   fsm_state current_state;
   fsm_state next_state;
   always @ (posedge clk or negedge arst_n_in) begin
@@ -60,20 +61,20 @@ module controller_fsm #(
   end
 
   //loop counters (see register.sv for macro)
-  `REG(32, k_v);
-  `REG(32, k_h);
-  `REG(32, x);
-  `REG(32, y);
-  `REG(32, ch_in);
-  `REG(32, ch_out);
+  `REG(8, k_v);
+  `REG(8, k_h);
+  `REG(8, x);
+  `REG(8, y);
+  `REG(8, ch_in);
+  `REG(8, ch_out);
 
   //addr counters (see register.sv for macro)
-  `REG(32, k_v_m);
-  `REG(32, k_h_m);
-  `REG(32, x_m);
-  `REG(32, y_m);
-  `REG(32, ch_in_m);
-  `REG(32, ch_out_m);
+  `REG(8, k_v_m);
+  `REG(8, k_h_m);
+  `REG(8, x_m);
+  `REG(8, y_m);
+  `REG(8, ch_in_m);
+  `REG(8, ch_out_m);
 
   logic reset_k_v, reset_k_h, reset_x, reset_y, reset_ch_in, reset_ch_out;
   assign k_v_next = reset_k_v ? 0 : k_v + 1;
@@ -115,14 +116,14 @@ module controller_fsm #(
   assign last_ch_out_m = ch_out_m == OUTPUT_NB_CHANNELS - 1;
 
   assign reset_k_v = last_k_v;
-  assign reset_k_h = last_k_h;
+  assign reset_k_h = last_k_h || current_state == LOAD;
   assign reset_x = last_x;
   assign reset_y = last_y;
   assign reset_ch_in = last_ch_in;
   assign reset_ch_out = last_ch_out;
 
   assign reset_k_v_m = last_k_v_m;
-  assign reset_k_h_m = last_k_h_m;
+  assign reset_k_h_m = last_k_h_m || current_state == LOAD;
   assign reset_x_m = last_x_m;
   assign reset_y_m = last_y_m;
   assign reset_ch_in_m = last_ch_in_m;
@@ -139,14 +140,14 @@ module controller_fsm #(
               body
   */
   // ==>
-  assign k_h_we    = mac_valid; //each time a mac is done, or in case of kickstarting the pipeline, k_h_we increments (or resets to 0 if last)
+  assign k_h_we    = mac_valid || (current_state == LOAD); //each time a mac is done, or in case of kickstarting the pipeline, k_h_we increments (or resets to 0 if last)
   assign k_v_we    = mac_valid && last_k_h; //only if last of k_h loop
   assign ch_out_we = mac_valid && last_k_h && last_k_v; //only if last of all enclosed loops
   assign ch_in_we  = mac_valid && last_k_h && last_k_v && last_ch_out; //only if last of all enclosed loops
   assign y_we      = mac_valid && last_k_h && last_k_v && last_ch_out && last_ch_in; //only if last of all enclosed loops
   assign x_we      = mac_valid && last_k_h && last_k_v && last_ch_out && last_ch_in && last_y; //only if last of all enclosed loops
 
-  assign k_h_m_we    = int_mem_re; 
+  assign k_h_m_we    = int_mem_re || (current_state == LOAD); 
   assign k_v_m_we    = int_mem_re && last_k_h_m; 
   assign ch_out_m_we = int_mem_re && last_k_h_m && last_k_v_m;
   assign ch_in_m_we  = int_mem_re && last_k_h_m && last_k_v_m && last_ch_out_m;
@@ -155,11 +156,7 @@ module controller_fsm #(
 
   logic last_overall;
   assign last_overall   = last_k_h && last_k_v && last_ch_out && last_ch_in && last_y && last_x;
-  assign fsm_done = last_overall;
-
-  `REG(1, pp_y_we);
-  assign pp_y_we_next = y_we;
-  assign pp_y_we_we = 1;
+  assign fsm_done = last_overall || ((x == 8'd64) && (current_state == MAC)); // Actually, FSM is not done. Trigger at the end of each half of the feature map.
 
   `REG(32, prev_ch_out);
   assign prev_ch_out_next = ch_out;
@@ -182,15 +179,15 @@ module controller_fsm #(
   assign mac_accumulate_internal = ! (k_v == 0 && k_h == 0);
   assign mac_accumulate_with_0   = (ch_in ==0 && k_v == 0 && k_h == 0);
 
-  register #(.WIDTH(32)) output_x_r (.clk(clk), .arst_n_in(arst_n_in),
+  register #(.WIDTH(8)) output_x_r (.clk(clk), .arst_n_in(arst_n_in),
                                                 .din(x),
                                                 .qout(output_x),
                                                 .we(mac_valid && last_ch_in && last_k_v && last_k_h));
-  register #(.WIDTH(32)) output_y_r (.clk(clk), .arst_n_in(arst_n_in),
+  register #(.WIDTH(8)) output_y_r (.clk(clk), .arst_n_in(arst_n_in),
                                                 .din(y),
                                                 .qout(output_y),
                                                 .we(mac_valid && last_ch_in && last_k_v && last_k_h));
-  register #(.WIDTH(32)) output_ch_r (.clk(clk), .arst_n_in(arst_n_in),
+  register #(.WIDTH(8)) output_ch_r (.clk(clk), .arst_n_in(arst_n_in),
                                                 .din(ch_out),
                                                 .qout(output_ch),
                                                 .we(mac_valid && last_ch_in && last_k_v && last_k_h));
@@ -209,6 +206,7 @@ module controller_fsm #(
     a_ready = 0;
     b_ready = 0;
     int_mem_re = 0;
+    overlap_cache_re = 0;
 
     case (current_state)
       IDLE: begin
@@ -224,18 +222,30 @@ module controller_fsm #(
         a_ready = 1;
         b_ready = 1;
         int_mem_re = 1;
+        overlap_cache_re = 1;
         write_a = 1;
         write_b = 1;
-        next_state = MAC;
+        next_state = (x == 32'd64) ? MAC2 : MAC;
       end
       MAC: begin
         mac_valid = 1;
         a_ready = 1;
         b_ready = 1;
         int_mem_re = 1;
+        overlap_cache_re = 1;
         write_a = 1;
         write_b = 1;
-        next_state = last_overall ? IDLE : MAC;
+        next_state = (output_valid && (x == 32'd64)) ? LOAD : MAC;
+      end
+      MAC2: begin
+        mac_valid = 1;
+        a_ready = 1;
+        b_ready = 1;
+        int_mem_re = 1;
+        overlap_cache_re = 1;
+        write_a = 1;
+        write_b = 1;
+        next_state = last_overall ? IDLE : MAC2;
       end
     endcase
   end
