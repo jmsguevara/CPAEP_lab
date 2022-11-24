@@ -15,6 +15,7 @@ interface intf #(
 
   // input interface
   logic int_mem_we;
+  logic overlap_cache_we;
   logic data_ready;
 
   logic fsm_done;
@@ -42,6 +43,7 @@ interface intf #(
     output arst_n;
 
     output int_mem_we;
+    output overlap_cache_we;
     output data_ready;
     input fsm_done;
 

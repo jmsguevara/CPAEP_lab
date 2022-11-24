@@ -26,6 +26,7 @@ module top_chip #(
 
    // write-enable driver <-> internal memory
    input logic int_mem_we,
+   input logic overlap_cache_we,
    input logic data_ready,
 
    output logic fsm_done,
@@ -65,6 +66,7 @@ module top_chip #(
 
   logic [IO_DATA_WIDTH-1:0] input_mem_out;
   logic [IO_DATA_WIDTH-1:0] kernel_mem_out;
+  logic [IO_DATA_WIDTH-1:0] overlap_out;
 
   logic [31:0] ky_out;
   logic [31:0] kx_out;
@@ -118,6 +120,24 @@ module top_chip #(
 
     .write_addr(a_input[8:0]),
     .write_en(int_mem_we & a_input[15]),
+    .din(b_input)
+  );
+
+  memory #(
+    .WIDTH(IO_DATA_WIDTH),
+    .HEIGHT(1<<8),
+    .USED_AS_EXTERNAL_MEM(0)
+  )
+  overlap_cache
+  (
+    .clk(clk),
+
+    .read_en(0),
+    .read_addr(0),
+    .qout(overlap_out),
+
+    .write_addr(a_input[7:0]),
+    .write_en(overlap_cache_we),
     .din(b_input)
   );
 

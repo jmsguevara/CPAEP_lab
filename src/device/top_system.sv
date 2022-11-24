@@ -15,6 +15,7 @@ module top_system #(
 
      //system inputs and outputs
      input logic int_mem_we,
+     input logic overlap_cache_we,
      input logic data_ready,
 
      output logic fsm_done,
@@ -88,6 +89,7 @@ module top_system #(
     .ext_mem_write_en(ext_mem_write_en),
 
     .int_mem_we(int_mem_we),
+    .overlap_cache_we(overlap_cache_we),
     .data_ready(data_ready),
 
     .fsm_done(fsm_done),

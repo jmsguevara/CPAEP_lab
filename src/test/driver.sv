@@ -20,6 +20,7 @@ class Driver #(config_t cfg);
      //asynchronous start of reset
     intf_i.cb.start   <= 0;
     intf_i.cb.int_mem_we <= 0;
+    intf_i.cb.overlap_cache_we <= 0;
     intf_i.cb.data_ready <= 0;
     intf_i.cb.a_valid <= 0;
     intf_i.cb.b_valid <= 0;
@@ -129,13 +130,13 @@ class Driver #(config_t cfg);
               intf_i.cb.a_valid <= 1;
               intf_i.cb.b_valid <= 1;
               if(tract_feature.inputs[y][x][inch] != 0) begin
-                intf_i.cb.int_mem_we <= 1;
-                addr = {2'b0, inch[0], y[6:0], x[5:0]};
+                intf_i.cb.overlap_cache_we <= 1;
+                addr = {inch[0], y[6:0]};
                 intf_i.cb.a_input <= addr;
                 intf_i.cb.b_input <= tract_feature.inputs[y][x][inch];
               end
               else begin
-                intf_i.cb.int_mem_we <= 0;
+                intf_i.cb.overlap_cache_we <= 0;
               end
               @(intf_i.cb iff intf_i.cb.b_ready && intf_i.cb.a_ready);
               intf_i.cb.a_valid <= 0;
@@ -143,6 +144,8 @@ class Driver #(config_t cfg);
 
           end
       end
+
+      intf_i.cb.overlap_cache_we <= 0;
 
       $display("[DRV] Giving data ready signal");
       intf_i.cb.data_ready <= 1;
@@ -160,13 +163,13 @@ class Driver #(config_t cfg);
               intf_i.cb.a_valid <= 1;
               intf_i.cb.b_valid <= 1;
               if(tract_feature.inputs[y][x][inch] != 0) begin
-                intf_i.cb.int_mem_we <= 1;
-                addr = {2'b0, inch[0], y[6:0], x[5:0]};
+                intf_i.cb.overlap_cache_we <= 1;
+                addr = {inch[0], y[6:0]};
                 intf_i.cb.a_input <= addr;
                 intf_i.cb.b_input <= tract_feature.inputs[y][x][inch];
               end
               else begin
-                intf_i.cb.int_mem_we <= 0;
+                intf_i.cb.overlap_cache_we <= 0;
               end
               @(intf_i.cb iff intf_i.cb.b_ready && intf_i.cb.a_ready);
               intf_i.cb.a_valid <= 0;
@@ -174,6 +177,8 @@ class Driver #(config_t cfg);
 
           end
       end
+
+      intf_i.cb.overlap_cache_we <= 0;
 
       // lower half
       for(int x = cfg.FEATURE_MAP_WIDTH / 2; x < cfg.FEATURE_MAP_WIDTH; x++) begin
