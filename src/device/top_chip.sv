@@ -206,7 +206,7 @@ module top_chip #(
   `REG(IO_DATA_WIDTH, b);
   //assign a_next = input_mem_out;
   assign a_next = (~x_aux[6] && x_aux[5:0] < FEATURE_MAP_WIDTH
-                    && ~y_aux[7] && y_aux[6:0] < FEATURE_MAP_HEIGHT) ? input_mem_out : 0;
+                    && ~y_aux[7] && y_aux[6:0] < FEATURE_MAP_HEIGHT) ? a_next_in : 0;
   assign b_next = kernel_mem_out;
   assign a_we = write_a;
   assign b_we = write_b;
