@@ -67,6 +67,7 @@ module top_chip #(
   logic [IO_DATA_WIDTH-1:0] input_mem_out;
   logic [IO_DATA_WIDTH-1:0] kernel_mem_out;
   logic [IO_DATA_WIDTH-1:0] overlap_out;
+  logic [IO_DATA_WIDTH-1:0] a_next_in;
 
   logic [31:0] ky_out;
   logic [31:0] kx_out;
@@ -83,6 +84,12 @@ module top_chip #(
   assign y_aux = y_out[6:0]+ky_out[1:0] - KERNEL_SIZE/2;
   logic [6:0] x_aux;
   assign x_aux = x_out[5:0]+kx_out[1:0] - KERNEL_SIZE/2;
+
+  logic input_switch;
+
+  assign input_switch = (x_out == 63 && x_aux == 64) || (x_out == 64 && x_aux == 63);
+
+  assign a_next_in = input_switch ? overlap_out : input_mem_out;
 
   assign input_addr = {inch_out[0], y_aux[6:0], x_aux[5:0]};
   assign kernel_addr = {inch_out[0], ky_out[1:0], kx_out[1:0], outch_out[3:0]};
