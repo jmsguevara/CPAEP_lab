@@ -99,6 +99,9 @@ module top_chip #(
   assign kernel_addr = {inch_out[0], ky_out[1:0], kx_out[1:0], outch_out[3:0]};
   assign overlap_addr = {inch_out[0], y_aux[6:0]};
 
+  logic b_in;
+  assign b_in <= b_zero ? 0 : b_input;
+
   memory #(
     .WIDTH(IO_DATA_WIDTH),
     .HEIGHT(1<<14),
@@ -114,7 +117,7 @@ module top_chip #(
 
     .write_addr(a_input[13:0]),
     .write_en(int_mem_we & ~a_input[15]),
-    .din(b_zero ? 0 : b_input)
+    .din(b_in)
   );
 
   memory #(
