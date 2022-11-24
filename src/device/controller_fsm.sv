@@ -115,14 +115,14 @@ module controller_fsm #(
   assign last_ch_out_m = ch_out_m == OUTPUT_NB_CHANNELS - 1;
 
   assign reset_k_v = last_k_v;
-  assign reset_k_h = last_k_h;
+  assign reset_k_h = last_k_h || current_state == LOAD;
   assign reset_x = last_x;
   assign reset_y = last_y;
   assign reset_ch_in = last_ch_in;
   assign reset_ch_out = last_ch_out;
 
   assign reset_k_v_m = last_k_v_m;
-  assign reset_k_h_m = last_k_h_m;
+  assign reset_k_h_m = last_k_h_m || current_state == LOAD;
   assign reset_x_m = last_x_m;
   assign reset_y_m = last_y_m;
   assign reset_ch_in_m = last_ch_in_m;
@@ -156,10 +156,6 @@ module controller_fsm #(
   logic last_overall;
   assign last_overall   = last_k_h && last_k_v && last_ch_out && last_ch_in && last_y && last_x;
   assign fsm_done = last_overall || ((x == 32'd64) && (current_state == MAC)); // Actually, FSM is not done. Trigger at the end of each half of the feature map.
-
-  `REG(1, pp_y_we);
-  assign pp_y_we_next = y_we;
-  assign pp_y_we_we = 1;
 
   `REG(32, prev_ch_out);
   assign prev_ch_out_next = ch_out;
