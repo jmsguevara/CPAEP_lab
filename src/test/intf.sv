@@ -71,7 +71,7 @@ interface intf #(
 
   //ENERGY ESTIMATION:
   always @ (posedge clk) begin
-    if(a_valid && a_ready && ~a_zero_flag) begin
+    if(a_valid && a_ready) begin
       tbench_top.energy += 1*(cfg.DATA_WIDTH);
     end
   end
